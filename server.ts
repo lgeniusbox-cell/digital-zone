@@ -92,8 +92,23 @@ const AI_TOOLS: FunctionDeclaration[] = [
         time: { type: Type.NUMBER, description: 'Time in seconds (original video time)' },
         action: {
           type: Type.STRING,
-          description: 'Type of action obstacle',
-          enum: ['jump_small', 'jump_long', 'move_left', 'move_right', 'slide_down', 'punch', 'slap'],
+          description: 'Type of required action',
+          enum: [
+            'STARTING COUNT',
+            'GO',
+            'JUMP',
+            'RIGHT',
+            'LEFT',
+            'SLIDE DOWN',
+            'SLASH',
+            'PUNCH',
+            'END',
+            'WIN',
+          ],
+        },
+        showOnScreen: {
+          type: Type.BOOLEAN,
+          description: 'Whether to show the visual cue on screen (true) or keep it hidden (false)',
         },
         hint: { type: Type.STRING, description: 'Visual hint text for the user' },
       },
@@ -128,12 +143,23 @@ function fallbackAgentResponse(prompt: string, projectState: any) {
     text = `J'ai renommé votre projet en "${suggested}".`;
   } else if (lower.includes('jeu') || lower.includes('game') || lower.includes('obstacle') || lower.includes('scénario') || lower.includes('scenario')) {
     functionCalls.push({ name: 'generate_script_from_video', args: { mode: 'game', difficulty: 'normal', title: `${projectState?.name || 'Vidéo'} - Course Action` } });
-    text = `J'ai créé un scénario de jeu d'action complet avec une série d'obstacles synchronisés (sauts, glissades, esquives et frappes) !`;
+    text = `J'ai créé un scénario de jeu d'action complet avec les actions requises (STARTING COUNT, GO, JUMP, RIGHT, LEFT, SLIDE DOWN, SLASH, PUNCH, END, WIN) !`;
   } else if (lower.includes('saut') || lower.includes('jump')) {
     const tStart = projectState?.trimStart || 2;
-    functionCalls.push({ name: 'add_event', args: { time: Number((tStart + 3.5).toFixed(2)), action: 'jump_small', hint: 'Petit saut !' } });
-    functionCalls.push({ name: 'add_event', args: { time: Number((tStart + 8.0).toFixed(2)), action: 'jump_long', hint: 'Grand saut !' } });
-    text = `J'ai identifié deux moments propices aux sauts et placé les obstacles 'jump_small' et 'jump_long' sur la timeline.`;
+    functionCalls.push({ name: 'add_event', args: { time: Number((tStart + 3.5).toFixed(2)), action: 'JUMP', showOnScreen: true, hint: 'Sautez !' } });
+    text = `J'ai placé l'action 'JUMP' synchronisée sur la timeline avec affichage à l'écran activé.`;
+  } else if (lower.includes('slash') || lower.includes('épée') || lower.includes('tranche')) {
+    const tStart = projectState?.trimStart || 2;
+    functionCalls.push({ name: 'add_event', args: { time: Number((tStart + 5.0).toFixed(2)), action: 'SLASH', showOnScreen: true, hint: 'Coup d\'épée !' } });
+    text = `J'ai ajouté l'action 'SLASH' sur la timeline.`;
+  } else if (lower.includes('punch') || lower.includes('poing') || lower.includes('frappe')) {
+    const tStart = projectState?.trimStart || 2;
+    functionCalls.push({ name: 'add_event', args: { time: Number((tStart + 6.5).toFixed(2)), action: 'PUNCH', showOnScreen: true, hint: 'Frappe directe !' } });
+    text = `J'ai ajouté l'action 'PUNCH' sur la timeline.`;
+  } else if (lower.includes('slide') || lower.includes('glisse')) {
+    const tStart = projectState?.trimStart || 2;
+    functionCalls.push({ name: 'add_event', args: { time: Number((tStart + 4.0).toFixed(2)), action: 'SLIDE DOWN', showOnScreen: true, hint: 'Glissez !' } });
+    text = `J'ai ajouté l'action 'SLIDE DOWN' sur la timeline.`;
   } else if (lower.includes('run') || lower.includes('course') || lower.includes('tapis') || lower.includes('treadmill')) {
     functionCalls.push({ name: 'generate_script_from_video', args: { mode: 'virtual_run', difficulty: 'normal', title: `${projectState?.name || 'Parcours'} - Trail Virtuel` } });
     text = `J'ai configuré votre vidéo en parcours Virtual Run avec des segments de pente adaptés et des paliers de vitesse.`;
@@ -141,7 +167,7 @@ function fallbackAgentResponse(prompt: string, projectState: any) {
     functionCalls.push({ name: 'set_audio_muted', args: { muted: true } });
     text = `J'ai coupé l'audio de la vidéo.`;
   } else {
-    text = `Je suis prêt à vous aider. Vous pouvez me demander de générer un jeu d'action, d'ajouter des obstacles précis, de renommer le projet ou de configurer un parcours Virtual Run.`;
+    text = `Je suis prêt à vous aider. Vous pouvez me demander de générer des actions (STARTING COUNT, GO, JUMP, RIGHT, LEFT, SLIDE DOWN, SLASH, PUNCH, END, WIN) ou de configurer le projet.`;
   }
 
   return { text, functionCalls };

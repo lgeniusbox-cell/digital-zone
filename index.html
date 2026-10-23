@@ -1134,27 +1134,58 @@
             <!-- Events Table -->
             <div class="inspector-card">
               <div class="inspector-card-title">
-                <span data-i18n="timelineEvents">Événements action</span>
-                <button id="btn-add-event-now" class="btn btn-sm btn-primary" title="Ajouter un événement au curseur actuel (Touches 1-7)">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  <span data-i18n="addEvent">Ajouter</span>
-                </button>
+                <span data-i18n="timelineEvents">Événements & Actions de Jeu</span>
+                <span class="badge badge-game" style="font-size:0.68rem;">10 Actions</span>
+              </div>
+
+              <!-- Action Selector & Creator Panel -->
+              <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.65rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div class="flex items-center justify-between">
+                  <span style="font-size:0.75rem; font-weight:700; color:var(--text-main);" data-i18n="actionRequired">Action requise :</span>
+                  <label class="flex items-center gap-1" style="font-size:0.72rem; cursor:pointer;" title="Détermine si l'icône et l'anneau d'approche s'affichent à l'écran du joueur">
+                    <input type="checkbox" id="new-event-show-on-screen" checked style="accent-color:var(--accent-game); width:14px; height:14px; cursor:pointer;" />
+                    <span style="font-weight:600; color:#34d399;" data-i18n="showOnScreen">Afficher à l'écran</span>
+                  </label>
+                </div>
+
+                <!-- Dropdown with all 10 actions -->
+                <select id="new-event-action" class="select-field" style="font-weight:700; font-size:0.8rem; background:#090e1a;">
+                  <option value="STARTING COUNT">STARTING COUNT (Compte à rebours 3-2-1)</option>
+                  <option value="GO">GO (Départ / Turbo)</option>
+                  <option value="JUMP" selected>JUMP (Saut obstacle)</option>
+                  <option value="RIGHT">RIGHT (Esquive à droite)</option>
+                  <option value="LEFT">LEFT (Esquive à gauche)</option>
+                  <option value="SLIDE DOWN">SLIDE DOWN (Glissade basse)</option>
+                  <option value="SLASH">SLASH (Coup d'épée / Lame)</option>
+                  <option value="PUNCH">PUNCH (Frappe / Coup de poing)</option>
+                  <option value="END">END (Ligne d'arrivée)</option>
+                  <option value="WIN">WIN (Pose de victoire)</option>
+                </select>
+
+                <div class="flex gap-2">
+                  <input type="text" id="new-event-hint" class="input-field flex-1" placeholder="Indice visuel (ex: Sautez !)" style="font-size:0.75rem; padding:0.35rem 0.55rem;" />
+                  <button id="btn-add-event-now" class="btn btn-sm btn-primary" title="Ajouter cette action au curseur ou à la section" style="padding:0.35rem 0.75rem;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span data-i18n="addEvent">Ajouter</span>
+                  </button>
+                </div>
               </div>
 
               <!-- Live Record Hint -->
-              <p style="font-size:0.72rem; color:var(--text-muted);">
-                💡 <span data-i18n="recordHotkeys">En lecture, pressez <strong>1 à 7</strong> pour placer un obstacle en direct !</span>
+              <p style="font-size:0.72rem; color:var(--text-muted); line-height:1.4;">
+                💡 <span data-i18n="recordHotkeys">En lecture, pressez <strong>1 à 0</strong> pour poser instantanément chaque action en direct !</span>
               </p>
 
               <!-- Events List Table -->
-              <div class="events-table-wrapper">
+              <div class="events-table-wrapper" style="max-height: 280px; overflow-y: auto;">
                 <table class="events-table">
                   <thead>
                     <tr>
-                      <th data-i18n="time">Temps</th>
-                      <th data-i18n="action">Action</th>
+                      <th style="width:50px;" data-i18n="time">Temps</th>
+                      <th data-i18n="action">Action requise</th>
+                      <th style="width:62px; text-align:center;" data-i18n="onScreenCol">Écran</th>
                       <th data-i18n="hint">Indice</th>
-                      <th></th>
+                      <th style="width:28px;"></th>
                     </tr>
                   </thead>
                   <tbody id="events-table-body">
@@ -1164,7 +1195,7 @@
               </div>
 
               <!-- Quick Shift Times -->
-              <div class="flex items-center justify-between gap-1">
+              <div class="flex items-center justify-between gap-1" style="padding-top:4px;">
                 <span style="font-size:0.7rem; color:var(--text-muted);">Décaler tout :</span>
                 <div class="flex gap-1">
                   <button id="btn-shift-minus" class="btn btn-sm">-0.5s</button>
@@ -1590,7 +1621,10 @@
           windowMs: "Fenêtre (ms)",
           timelineEvents: "Événements action",
           addEvent: "Ajouter",
-          recordHotkeys: "En lecture, pressez 1 à 7 pour placer un obstacle en direct !",
+          actionRequired: "Action requise",
+          showOnScreen: "Afficher à l'écran",
+          onScreenCol: "Écran",
+          recordHotkeys: "En lecture, pressez 1 à 0 pour poser chaque action en direct !",
           time: "Temps",
           action: "Action",
           hint: "Indice",
@@ -1648,7 +1682,10 @@
           windowMs: "Window (ms)",
           timelineEvents: "Action Events",
           addEvent: "Add",
-          recordHotkeys: "During playback, press 1-7 to drop obstacles live!",
+          actionRequired: "Required Action",
+          showOnScreen: "Show on screen",
+          onScreenCol: "Screen",
+          recordHotkeys: "During playback, press 1 to 0 to drop each action live!",
           time: "Time",
           action: "Action",
           hint: "Hint",
@@ -1711,6 +1748,19 @@
       // ========================================================================
       // 2. PROJECT STATE & STORAGE
       // ========================================================================
+      const ACTION_LIST = [
+        'STARTING COUNT',
+        'GO',
+        'JUMP',
+        'RIGHT',
+        'LEFT',
+        'SLIDE DOWN',
+        'SLASH',
+        'PUNCH',
+        'END',
+        'WIN'
+      ];
+
       const DEFAULT_PROJECTS = [
         {
           id: 'proj_game_demo',
@@ -1749,16 +1799,18 @@
               loseCondition: "misses>=maxMisses",
               allowRetryFromCheckpoint: true
             },
-            actions: ["jump_small", "jump_long", "move_left", "move_right", "slide_down", "punch", "slap"],
+            actions: ACTION_LIST,
             timeline: [
-              { id: "evt_1", time: 5.0, action: "jump_small", duration: 0.6, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Petit saut !", visualCue: "arrow_up", required: true },
-              { id: "evt_2", time: 9.2, action: "slide_down", duration: 0.7, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Glissade !", visualCue: "arrow_down", required: true },
-              { id: "evt_3", time: 13.0, action: "move_left", duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Esquive gauche", visualCue: "arrow_left", required: true },
-              { id: "evt_4", time: 22.4, action: "punch", duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Coup de poing !", visualCue: "punch", required: true },
-              { id: "evt_5", time: 27.0, action: "jump_long", duration: 0.8, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Grand Saut !", visualCue: "arrow_up_double", required: true },
-              { id: "evt_6", time: 33.5, action: "move_right", duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Esquive droite", visualCue: "arrow_right", required: true },
-              { id: "evt_7", time: 39.0, action: "slap", duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Gifle tournante !", visualCue: "slap", required: true },
-              { id: "evt_8", time: 44.0, action: "jump_small", duration: 0.6, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Saut final !", visualCue: "arrow_up", required: true }
+              { id: "evt_1", time: 3.5, action: "STARTING COUNT", showOnScreen: true, duration: 1.0, window: { before: 0.35, after: 0.35 }, points: 100, hint: "Compte à rebours 3-2-1", visualCue: "timer", required: true },
+              { id: "evt_2", time: 6.0, action: "GO", showOnScreen: true, duration: 0.6, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Départ Turbo !", visualCue: "go", required: true },
+              { id: "evt_3", time: 9.5, action: "JUMP", showOnScreen: true, duration: 0.6, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Sautez !", visualCue: "jump", required: true },
+              { id: "evt_4", time: 13.5, action: "LEFT", showOnScreen: true, duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Esquive gauche", visualCue: "left", required: true },
+              { id: "evt_5", time: 20.0, action: "SLIDE DOWN", showOnScreen: true, duration: 0.7, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Glissade basse", visualCue: "slide_down", required: true },
+              { id: "evt_6", time: 24.5, action: "PUNCH", showOnScreen: true, duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Coup de poing !", visualCue: "punch", required: true },
+              { id: "evt_7", time: 29.5, action: "SLASH", showOnScreen: true, duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Coup d'épée !", visualCue: "slash", required: true },
+              { id: "evt_8", time: 34.0, action: "RIGHT", showOnScreen: false, duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 150, hint: "Esquive réflexe (Caché)", visualCue: "right", required: true },
+              { id: "evt_9", time: 40.5, action: "END", showOnScreen: true, duration: 0.6, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Ligne d'arrivée !", visualCue: "end", required: true },
+              { id: "evt_10", time: 45.0, action: "WIN", showOnScreen: true, duration: 0.8, window: { before: 0.4, after: 0.4 }, points: 200, hint: "Victoire éclatante !", visualCue: "win", required: true }
             ],
             checkpoints: [
               { time: 20.0, label: "Checkpoint 1" },
@@ -1838,6 +1890,20 @@
           projects = JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
           saveProjects();
         }
+        // Ensure all events have showOnScreen set and actions conform to ACTION_LIST
+        projects.forEach(p => {
+          if (p.script && p.script.timeline) {
+            p.script.timeline.forEach(evt => {
+              if (evt.showOnScreen === undefined) evt.showOnScreen = true;
+              if (evt.action === 'jump_small' || evt.action === 'jump_long') evt.action = 'JUMP';
+              else if (evt.action === 'move_left') evt.action = 'LEFT';
+              else if (evt.action === 'move_right') evt.action = 'RIGHT';
+              else if (evt.action === 'slide_down') evt.action = 'SLIDE DOWN';
+              else if (evt.action === 'slap') evt.action = 'SLASH';
+            });
+            p.script.actions = ACTION_LIST;
+          }
+        });
         const activeId = localStorage.getItem('videoplay_current_id');
         currentProject = projects.find(p => p.id === activeId) || projects[0];
       }
@@ -2187,13 +2253,16 @@
       }
 
       const ACTION_COLORS = {
-        jump_small: '#06b6d4',
-        jump_long: '#6366f1',
-        move_left: '#f97316',
-        move_right: '#f59e0b',
-        slide_down: '#10b981',
-        punch: '#ef4444',
-        slap: '#a855f7'
+        'STARTING COUNT': '#f59e0b',
+        'GO': '#22c55e',
+        'JUMP': '#06b6d4',
+        'RIGHT': '#f97316',
+        'LEFT': '#eab308',
+        'SLIDE DOWN': '#10b981',
+        'SLASH': '#ec4899',
+        'PUNCH': '#ef4444',
+        'END': '#8b5cf6',
+        'WIN': '#fbbf24'
       };
 
       function drawTimeline() {
@@ -2294,29 +2363,52 @@
         for (const evt of events) {
           const ex = evt.time * zoomLevel;
           const color = ACTION_COLORS[evt.action] || '#ec4899';
+          const isHidden = evt.showOnScreen === false;
 
-          // Vertical indicator
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 2;
+          // Vertical indicator line (dashed if hidden on screen)
+          ctx.save();
+          if (isHidden) {
+            ctx.setLineDash([3, 3]);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.5;
+          } else {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+          }
           ctx.beginPath();
           ctx.moveTo(ex, trackY);
           ctx.lineTo(ex, trackY + trackHeight);
           ctx.stroke();
+          ctx.restore();
 
-          // Top pin head
-          ctx.fillStyle = color;
+          // Top pin head (hollow with ring if hidden on screen, solid if visible)
           ctx.beginPath();
-          ctx.arc(ex, trackY + 8, 7, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = '#fff';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
+          ctx.arc(ex, trackY + 8, 8, 0, Math.PI * 2);
+          if (isHidden) {
+            ctx.fillStyle = '#0f172a';
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
 
-          // Action initial
-          ctx.fillStyle = '#fff';
-          ctx.font = 'bold 8px Inter';
+          // Action initial / glyph
+          let label = evt.action.substring(0, 1).toUpperCase();
+          if (evt.action === 'STARTING COUNT') label = '3';
+          else if (evt.action === 'GO') label = 'GO';
+          else if (evt.action === 'SLASH') label = '/';
+          else if (evt.action === 'SLIDE DOWN') label = 'S';
+
+          ctx.fillStyle = isHidden ? color : '#fff';
+          ctx.font = label.length > 1 ? 'bold 7px Inter' : 'bold 8px Inter';
           ctx.textAlign = 'center';
-          ctx.fillText(evt.action.substring(0, 1).toUpperCase(), ex, trackY + 11);
+          ctx.fillText(label, ex, trackY + 11);
           ctx.textAlign = 'start';
         }
 
@@ -2590,22 +2682,31 @@
         syncUI();
       }
 
-      function addEventAtPlayhead(action = "jump_small") {
+      function addEventAtPlayhead(action, showOnScreen, hint) {
         if (!currentProject) return;
         pushUndoState();
         currentProject.script = currentProject.script || { type: 'game' };
         currentProject.script.timeline = currentProject.script.timeline || [];
 
         const time = Number(playheadTime.toFixed(2));
+        const selectEl = document.getElementById('new-event-action');
+        const showEl = document.getElementById('new-event-show-on-screen');
+        const hintEl = document.getElementById('new-event-hint');
+
+        const chosenAction = action || (selectEl ? selectEl.value : 'JUMP');
+        const isShow = showOnScreen !== undefined ? showOnScreen : (showEl ? showEl.checked : true);
+        const textHint = hint !== undefined ? hint : ((hintEl && hintEl.value.trim()) ? hintEl.value.trim() : chosenAction);
+
         const newEvt = {
-          id: 'evt_' + Date.now(),
+          id: 'evt_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
           time: time,
-          action: action,
+          action: chosenAction,
+          showOnScreen: isShow,
           duration: 0.6,
-          window: { before: 0.25, after: 0.25 },
+          window: { before: 0.28, after: 0.28 },
           points: 100,
-          hint: action === 'jump_small' ? 'Petit saut' : action,
-          visualCue: action,
+          hint: textHint,
+          visualCue: chosenAction.toLowerCase().replace(/\s+/g, '_'),
           required: true
         };
 
@@ -2614,7 +2715,7 @@
 
         saveProjects();
         syncUI();
-        showToast(`Obstacle ${action} ajouté à ${time}s`);
+        showToast(`Action "${chosenAction}" ajoutée à ${time}s (Écran: ${isShow ? 'Oui' : 'Non'})`);
       }
 
       function validateScript(project) {
@@ -2761,55 +2862,110 @@
         const armOsc = Math.cos(stateTime * 14) * 16;
 
         switch (state) {
-          case 'jump_small':
-            // Jumping up
-            ctx.translate(0, -50 + Math.sin(stateTime * 10) * 15);
+          case 'STARTING COUNT':
+            // Crouched low in starting blocks
+            ctx.translate(0, 18);
+            ctx.fillStyle = '#f59e0b';
+            // Floating countdown 3-2-1 indicators
+            ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
+            ctx.font = 'bold 22px JetBrains Mono';
+            ctx.fillText("3.. 2.. 1..", -40, -45);
+            break;
+          case 'GO':
+            // High speed forward sprint
+            ctx.translate(25, -5);
+            ctx.fillStyle = '#22c55e';
+            // Speed trail lines
+            ctx.strokeStyle = 'rgba(34, 197, 94, 0.6)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-50, -10); ctx.lineTo(-15, -10);
+            ctx.moveTo(-60, 5); ctx.lineTo(-20, 5);
+            ctx.moveTo(-45, 20); ctx.lineTo(-10, 20);
+            ctx.stroke();
+            break;
+          case 'JUMP':
+            // High leap in the air
+            ctx.translate(0, -65 + Math.sin(stateTime * 10) * 15);
             ctx.fillStyle = '#06b6d4';
+            // Upward wind arcs
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(0, 30, 20, Math.PI * 0.2, Math.PI * 0.8);
+            ctx.stroke();
             break;
-          case 'jump_long':
-            // High leap
-            ctx.translate(0, -90 + Math.sin(stateTime * 8) * 20);
-            ctx.fillStyle = '#6366f1';
-            // Speed trail
-            ctx.fillStyle = 'rgba(99, 102, 241, 0.4)';
-            ctx.fillRect(-20, 20, 40, 10);
-            break;
-          case 'slide_down':
-            // Crouching low slide
-            ctx.translate(0, 30);
+          case 'SLIDE DOWN':
+            // Crouching low ground slide
+            ctx.translate(0, 32);
             ctx.fillStyle = '#10b981';
             // Dust particles
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
             ctx.beginPath();
-            ctx.arc(-30 + Math.random() * 10, 20, 4, 0, Math.PI * 2);
+            ctx.arc(-30 + Math.random() * 8, 18, 5, 0, Math.PI * 2);
+            ctx.arc(-45 + Math.random() * 6, 14, 3, 0, Math.PI * 2);
             ctx.fill();
             break;
-          case 'move_left':
-            ctx.translate(-70, 0);
+          case 'LEFT':
+            // Quick lateral dodge left
+            ctx.translate(-75, 0);
+            ctx.fillStyle = '#eab308';
+            ctx.strokeStyle = 'rgba(234, 179, 8, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-15, -30, 30, 50);
+            break;
+          case 'RIGHT':
+            // Quick lateral dodge right
+            ctx.translate(75, 0);
             ctx.fillStyle = '#f97316';
+            ctx.strokeStyle = 'rgba(249, 115, 22, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-15, -30, 30, 50);
             break;
-          case 'move_right':
-            ctx.translate(70, 0);
-            ctx.fillStyle = '#f59e0b';
+          case 'SLASH':
+            // Hot pink sword slash arc
+            ctx.fillStyle = '#ec4899';
+            ctx.strokeStyle = '#f472b6';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.arc(15, -25, 42, -0.8, 1.8);
+            ctx.stroke();
+            // Blade spark
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(42, -50, 6, 0, Math.PI * 2);
+            ctx.fill();
             break;
-          case 'punch':
+          case 'PUNCH':
+            // Red fist strike thrust
             ctx.fillStyle = '#ef4444';
-            // Fist thrust
-            ctx.fillRect(20, -25, 28, 12);
-            // Comic starburst
+            ctx.fillRect(15, -24, 32, 14);
+            // Comic starburst impact
             ctx.fillStyle = '#fef08a';
             ctx.beginPath();
-            ctx.arc(50, -20, 14, 0, Math.PI * 2);
+            ctx.arc(52, -17, 16, 0, Math.PI * 2);
             ctx.fill();
             break;
-          case 'slap':
-            ctx.fillStyle = '#a855f7';
-            // Roundhouse arc
-            ctx.beginPath();
-            ctx.arc(10, -30, 32, -0.5, 1.5);
-            ctx.strokeStyle = '#e9d5ff';
+          case 'END':
+            // Crossing finish line ribbon
+            ctx.fillStyle = '#8b5cf6';
+            ctx.strokeStyle = '#a78bfa';
             ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(-10, -50); ctx.lineTo(-10, 30);
             ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px JetBrains Mono';
+            ctx.fillText("FINISH", 15, -15);
+            break;
+          case 'WIN':
+            // Golden victory celebration
+            ctx.translate(0, -25);
+            ctx.fillStyle = '#fbbf24';
+            // Star crown
+            ctx.fillStyle = '#fef08a';
+            ctx.font = '24px sans-serif';
+            ctx.fillText("👑", -12, -60);
             break;
           default:
             // Running
@@ -2837,10 +2993,21 @@
         ctx.lineCap = 'round';
 
         // Legs
-        if (state === 'slide_down') {
+        if (state === 'SLIDE DOWN') {
           ctx.beginPath();
           ctx.moveTo(-5, 0);
           ctx.lineTo(25, 10);
+          ctx.stroke();
+        } else if (state === 'WIN') {
+          // Both arms raised high in 'V'
+          ctx.beginPath();
+          ctx.moveTo(-10, -30); ctx.lineTo(-24, -58);
+          ctx.moveTo(10, -30); ctx.lineTo(24, -58);
+          ctx.stroke();
+          // Legs standing firm
+          ctx.beginPath();
+          ctx.moveTo(-5, 0); ctx.lineTo(-12, 26);
+          ctx.moveTo(5, 0); ctx.lineTo(12, 26);
           ctx.stroke();
         } else {
           // Left Leg
@@ -2853,13 +3020,13 @@
           ctx.moveTo(5, 0);
           ctx.lineTo(5 + legOsc, 26);
           ctx.stroke();
-        }
 
-        // Arms
-        ctx.beginPath();
-        ctx.moveTo(-8, -30);
-        ctx.lineTo(-8 + armOsc, -12);
-        ctx.stroke();
+          // Arms
+          ctx.beginPath();
+          ctx.moveTo(-8, -30);
+          ctx.lineTo(-8 + armOsc, -12);
+          ctx.stroke();
+        }
 
         ctx.restore();
       }
@@ -2937,26 +3104,46 @@
               const cueX = strikeX + (timeDiff * approachSpeed);
               const color = ACTION_COLORS[evt.action] || '#ec4899';
 
-              // Approaching ring
-              const ringRadius = Math.max(28, 28 + (timeDiff * 25));
-              playCtx.strokeStyle = color;
-              playCtx.lineWidth = 2;
-              playCtx.beginPath();
-              playCtx.arc(cueX, strikeY, ringRadius, 0, Math.PI * 2);
-              playCtx.stroke();
+              // Option 'show on screen': only render visible cues if showOnScreen !== false
+              if (evt.showOnScreen !== false) {
+                // Approaching ring
+                const ringRadius = Math.max(28, 28 + (timeDiff * 25));
+                playCtx.strokeStyle = color;
+                playCtx.lineWidth = 2.5;
+                playCtx.beginPath();
+                playCtx.arc(cueX, strikeY, ringRadius, 0, Math.PI * 2);
+                playCtx.stroke();
 
-              // Cue Core Icon
-              playCtx.fillStyle = color;
-              playCtx.beginPath();
-              playCtx.arc(cueX, strikeY, 22, 0, Math.PI * 2);
-              playCtx.fill();
+                // Cue Core Icon
+                playCtx.fillStyle = color;
+                playCtx.beginPath();
+                playCtx.arc(cueX, strikeY, 22, 0, Math.PI * 2);
+                playCtx.fill();
 
-              // Action label
-              playCtx.fillStyle = '#fff';
-              playCtx.font = 'bold 11px Inter';
-              playCtx.textAlign = 'center';
-              playCtx.fillText(evt.action.toUpperCase(), cueX, strikeY + 40);
-              playCtx.textAlign = 'start';
+                // Short glyph inside circle
+                playCtx.fillStyle = '#fff';
+                playCtx.font = 'bold 9px JetBrains Mono';
+                playCtx.textAlign = 'center';
+                let shortGlyph = evt.action;
+                if (evt.action === 'STARTING COUNT') shortGlyph = '3-2-1';
+                else if (evt.action === 'SLIDE DOWN') shortGlyph = 'SLIDE';
+                playCtx.fillText(shortGlyph, cueX, strikeY + 3);
+
+                // Action label + hint below
+                playCtx.font = 'bold 11px Inter';
+                playCtx.fillText(evt.hint || evt.action, cueX, strikeY + 40);
+                playCtx.textAlign = 'start';
+              } else if (gameState.debugOverlay) {
+                // Debug ghost box if hidden on screen
+                playCtx.save();
+                playCtx.setLineDash([4, 4]);
+                playCtx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+                playCtx.strokeRect(cueX - 22, strikeY - 22, 44, 44);
+                playCtx.fillStyle = '#94a3b8';
+                playCtx.font = '9px JetBrains Mono';
+                playCtx.fillText(`[MASQUÉ: ${evt.action}]`, cueX - 25, strikeY - 26);
+                playCtx.restore();
+              }
             }
 
             // Miss evaluation if event passed window without input
@@ -3191,7 +3378,22 @@
             type: "OBJECT",
             properties: {
               time: { type: "NUMBER", description: "Time in seconds (original video time)" },
-              action: { type: "STRING", enum: ["jump_small", "jump_long", "move_left", "move_right", "slide_down", "punch", "slap"] },
+              action: {
+                type: "STRING",
+                enum: [
+                  "STARTING COUNT",
+                  "GO",
+                  "JUMP",
+                  "RIGHT",
+                  "LEFT",
+                  "SLIDE DOWN",
+                  "SLASH",
+                  "PUNCH",
+                  "END",
+                  "WIN"
+                ]
+              },
+              showOnScreen: { type: "BOOLEAN", description: "Whether visual cue is visible on screen (default true)" },
               hint: { type: "STRING", description: "Visual hint text for the player" }
             },
             required: ["time", "action"]
@@ -3334,15 +3536,17 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
           case 'add_event':
             currentProject.script = currentProject.script || { type: 'game', timeline: [] };
             currentProject.script.timeline = currentProject.script.timeline || [];
+            const isShow = args.showOnScreen !== false;
             currentProject.script.timeline.push({
               id: 'evt_' + Date.now(),
               time: args.time,
               action: args.action,
+              showOnScreen: isShow,
               duration: 0.6,
               points: 100,
               hint: args.hint || args.action
             });
-            reply = `✅ Obstacle ${args.action} placé à ${args.time}s.`;
+            reply = `✅ Action ${args.action} ajoutée à ${args.time}s (Écran: ${isShow ? 'Oui' : 'Non'}).`;
             break;
           case 'generate_script_from_video':
             currentProject.script = currentProject.script || {};
@@ -3352,23 +3556,24 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
               currentProject.title = args.title;
             }
             if (args.mode === 'game') {
-              const dur = currentProject.trimEnd - currentProject.trimStart;
-              const step = dur / 7;
+              const dur = (currentProject.trimEnd || currentProject.duration || 60) - (currentProject.trimStart || 0);
+              const step = dur / 9;
               currentProject.script.timeline = [];
-              const actions = ["jump_small", "slide_down", "move_left", "punch", "jump_long", "move_right", "slap"];
-              for (let i = 0; i < 6; i++) {
-                const t = Number((currentProject.trimStart + step * (i + 1)).toFixed(2));
+              const actionsSeq = ['STARTING COUNT', 'GO', 'JUMP', 'LEFT', 'SLIDE DOWN', 'PUNCH', 'SLASH', 'RIGHT', 'END', 'WIN'];
+              for (let i = 0; i < actionsSeq.length; i++) {
+                const t = Number(((currentProject.trimStart || 0) + step * (i + 0.5)).toFixed(2));
                 currentProject.script.timeline.push({
                   id: 'evt_' + (i + 1),
                   time: t,
-                  action: actions[i % actions.length],
+                  action: actionsSeq[i],
+                  showOnScreen: true,
                   duration: 0.6,
                   points: 100,
-                  hint: actions[i % actions.length]
+                  hint: actionsSeq[i]
                 });
               }
             }
-            reply = `✅ Scénario interactif généré avec succès (${args.mode}).`;
+            reply = `✅ Scénario interactif généré avec succès (${args.mode}) avec les 10 actions requises.`;
             break;
           default:
             reply = `Outil ${toolName} exécuté.`;
@@ -3564,30 +3769,98 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
         const events = currentProject.script?.timeline || [];
 
         if (events.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-dim); padding:1rem;">${I18N[currentLang].noEvents}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-dim); padding:1rem;">${I18N[currentLang].noEvents}</td></tr>`;
           return;
         }
 
         events.forEach(evt => {
+          const isHidden = evt.showOnScreen === false;
           const tr = document.createElement('tr');
+          const color = ACTION_COLORS[evt.action] || '#ec4899';
+
+          // Build options for the 10 actions
+          const optionsHtml = ACTION_LIST.map(act => {
+            const isSel = act === evt.action ? 'selected' : '';
+            return `<option value="${act}" ${isSel}>${act}</option>`;
+          }).join('');
+
           tr.innerHTML = `
-            <td style="font-family:'JetBrains Mono';">${evt.time.toFixed(2)}s</td>
-            <td>
-              <span class="badge" style="background:${ACTION_COLORS[evt.action]}22; color:${ACTION_COLORS[evt.action]}; border:1px solid ${ACTION_COLORS[evt.action]}44;">
-                ${evt.action}
-              </span>
+            <td style="font-family:'JetBrains Mono'; font-size:0.75rem; white-space:nowrap;">
+              <span class="evt-time-link" data-time="${evt.time}" style="cursor:pointer; color:#38bdf8; text-decoration:underline;" title="Aller à ce point">${evt.time.toFixed(2)}s</span>
             </td>
-            <td style="max-width:90px; overflow:hidden; text-overflow:ellipsis;">${evt.hint || ''}</td>
+            <td>
+              <select class="select-field evt-action-select" data-id="${evt.id}" style="padding:0.25rem 0.35rem; font-size:0.73rem; font-weight:700; background:#0b1120; border:1px solid ${color}; color:${color}; min-width:130px;">
+                ${optionsHtml}
+              </select>
+            </td>
+            <td style="text-align:center;">
+              <label style="display:inline-flex; align-items:center; justify-content:center; gap:3px; cursor:pointer;" title="Afficher à l'écran (Show on screen)">
+                <input type="checkbox" class="evt-show-screen" data-id="${evt.id}" ${!isHidden ? 'checked' : ''} style="accent-color:var(--accent-game); width:14px; height:14px; cursor:pointer;">
+                <span class="badge ${!isHidden ? 'badge-game' : 'badge-raw'}" style="font-size:0.62rem; padding:1px 5px;">${!isHidden ? 'Oui' : 'Non'}</span>
+              </label>
+            </td>
+            <td>
+              <input type="text" class="input-field evt-hint-input" data-id="${evt.id}" value="${(evt.hint || '').replace(/"/g, '&quot;')}" placeholder="Indice..." style="padding:0.25rem 0.4rem; font-size:0.75rem;" />
+            </td>
             <td style="text-align:right;">
-              <button class="btn btn-sm btn-icon btn-del-evt" data-id="${evt.id}" style="padding:2px 4px; color:#f87171;">✕</button>
+              <button class="btn btn-sm btn-icon btn-del-evt" data-id="${evt.id}" title="Supprimer" style="padding:2px 5px; color:#f87171;">✕</button>
             </td>
           `;
 
+          // Seek to time on click
+          tr.querySelector('.evt-time-link').addEventListener('click', () => {
+            seekToTime(evt.time);
+          });
+
+          // Action dropdown change handler
+          const actionSelect = tr.querySelector('.evt-action-select');
+          actionSelect.addEventListener('change', (e) => {
+            pushUndoState();
+            const newAct = e.target.value;
+            evt.action = newAct;
+            evt.visualCue = newAct.toLowerCase().replace(/\s+/g, '_');
+            saveProjects();
+            drawTimeline();
+            renderJsonOutput();
+            // Update color on select
+            const newCol = ACTION_COLORS[newAct] || '#ec4899';
+            actionSelect.style.borderColor = newCol;
+            actionSelect.style.color = newCol;
+            showToast(`Action changée en : "${newAct}"`);
+          });
+
+          // Show on screen checkbox handler
+          const screenCheck = tr.querySelector('.evt-show-screen');
+          screenCheck.addEventListener('change', (e) => {
+            pushUndoState();
+            evt.showOnScreen = e.target.checked;
+            saveProjects();
+            drawTimeline();
+            renderJsonOutput();
+            // Update badge text
+            const badgeSpan = tr.querySelector('label span.badge');
+            if (badgeSpan) {
+              badgeSpan.textContent = evt.showOnScreen ? 'Oui' : 'Non';
+              badgeSpan.className = `badge ${evt.showOnScreen ? 'badge-game' : 'badge-raw'}`;
+            }
+            showToast(`Affichage à l'écran : ${evt.showOnScreen ? 'Activé (Visible)' : 'Désactivé (Masqué)'}`);
+          });
+
+          // Hint input change handler
+          const hintInput = tr.querySelector('.evt-hint-input');
+          hintInput.addEventListener('change', (e) => {
+            evt.hint = e.target.value.trim();
+            saveProjects();
+            renderJsonOutput();
+          });
+
+          // Delete event button
           tr.querySelector('.btn-del-evt').addEventListener('click', () => {
             pushUndoState();
             currentProject.script.timeline = currentProject.script.timeline.filter(e => e.id !== evt.id);
             saveProjects();
             syncUI();
+            showToast("Événement supprimé");
           });
 
           tbody.appendChild(tr);
@@ -3768,8 +4041,8 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
         document.getElementById('btn-mode-game').addEventListener('click', () => setScriptMode('game'));
         document.getElementById('btn-mode-run').addEventListener('click', () => setScriptMode('virtual_run'));
 
-        // Add event now
-        document.getElementById('btn-add-event-now').addEventListener('click', () => addEventAtPlayhead("jump_small"));
+        // Add event now (reads from select and showOnScreen toggle)
+        document.getElementById('btn-add-event-now').addEventListener('click', () => addEventAtPlayhead());
 
         // Play mode launch
         document.getElementById('btn-play-mode').addEventListener('click', openPlayMode);
@@ -4087,15 +4360,52 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
           if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
           if (isPlayModeActive) {
-            // In Play Mode: Game Inputs
-            if (e.key === 'ArrowUp' && e.shiftKey) { e.preventDefault(); handleGameActionInput('jump_long'); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); handleGameActionInput('jump_small'); }
-            else if (e.key === 'ArrowDown') { e.preventDefault(); handleGameActionInput('slide_down'); }
-            else if (e.key === 'ArrowLeft') { e.preventDefault(); handleGameActionInput('move_left'); }
-            else if (e.key === 'ArrowRight') { e.preventDefault(); handleGameActionInput('move_right'); }
-            else if (e.code === 'KeyF') { e.preventDefault(); handleGameActionInput('punch'); }
-            else if (e.code === 'KeyD') { e.preventDefault(); handleGameActionInput('slap'); }
-            else if (e.key === 'Escape') { exitPlayMode(); }
+            // In Play Mode: Game Inputs for the 10 actions
+            if (e.key === 'ArrowUp' || e.code === 'KeyW' || e.code === 'KeyZ') {
+              e.preventDefault(); handleGameActionInput('JUMP');
+            } else if (e.key === 'ArrowDown' || e.code === 'KeyS') {
+              e.preventDefault(); handleGameActionInput('SLIDE DOWN');
+            } else if (e.key === 'ArrowLeft' || e.code === 'KeyA' || e.code === 'KeyQ') {
+              e.preventDefault(); handleGameActionInput('LEFT');
+            } else if (e.key === 'ArrowRight' || e.code === 'KeyD') {
+              e.preventDefault(); handleGameActionInput('RIGHT');
+            } else if (e.code === 'KeyE' || e.code === 'KeyX') {
+              e.preventDefault(); handleGameActionInput('SLASH');
+            } else if (e.code === 'KeyF' || e.code === 'KeyC') {
+              e.preventDefault(); handleGameActionInput('PUNCH');
+            } else if (e.code === 'Space' || e.code === 'Enter') {
+              e.preventDefault();
+              const curTime = ytPlayer ? ytPlayer.getCurrentTime() : playheadTime;
+              const events = currentProject.script?.timeline || [];
+              const upcoming = events.find(ev => Math.abs(ev.time - curTime) < 0.45 && !gameState.evaluatedEvents.has(ev.id));
+              if (upcoming && ['STARTING COUNT', 'GO', 'END', 'WIN'].includes(upcoming.action)) {
+                handleGameActionInput(upcoming.action);
+              } else {
+                handleGameActionInput('GO');
+              }
+            } else if (e.key === '1') {
+              handleGameActionInput('STARTING COUNT');
+            } else if (e.key === '2') {
+              handleGameActionInput('GO');
+            } else if (e.key === '3') {
+              handleGameActionInput('JUMP');
+            } else if (e.key === '4') {
+              handleGameActionInput('LEFT');
+            } else if (e.key === '5') {
+              handleGameActionInput('RIGHT');
+            } else if (e.key === '6') {
+              handleGameActionInput('SLIDE DOWN');
+            } else if (e.key === '7') {
+              handleGameActionInput('SLASH');
+            } else if (e.key === '8') {
+              handleGameActionInput('PUNCH');
+            } else if (e.key === '9') {
+              handleGameActionInput('END');
+            } else if (e.key === '0') {
+              handleGameActionInput('WIN');
+            } else if (e.key === 'Escape') {
+              exitPlayMode();
+            }
             return;
           }
 
@@ -4125,18 +4435,22 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
           } else if (e.ctrlKey && e.code === 'KeyY') {
             e.preventDefault();
             redo();
-          } else if (['1', '2', '3', '4', '5', '6', '7'].includes(e.key)) {
-            // Quick Action drop while playing
+          } else if (['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'].includes(e.key)) {
+            // Quick Action drop while playing or editing
             const actionsMap = {
-              '1': 'jump_small',
-              '2': 'jump_long',
-              '3': 'move_left',
-              '4': 'move_right',
-              '5': 'slide_down',
-              '6': 'punch',
-              '7': 'slap'
+              '1': 'STARTING COUNT',
+              '2': 'GO',
+              '3': 'JUMP',
+              '4': 'LEFT',
+              '5': 'RIGHT',
+              '6': 'SLIDE DOWN',
+              '7': 'SLASH',
+              '8': 'PUNCH',
+              '9': 'END',
+              '0': 'WIN'
             };
-            addEventAtPlayhead(actionsMap[e.key]);
+            const show = document.getElementById('new-event-show-on-screen')?.checked ?? true;
+            addEventAtPlayhead(actionsMap[e.key], show);
           }
         });
 
