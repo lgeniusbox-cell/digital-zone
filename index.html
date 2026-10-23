@@ -886,6 +886,12 @@
         <span>VideoPlay <span style="color:#ec4899;">Studio</span></span>
       </div>
 
+      <!-- Active Video Title Input (Directly editable in header) -->
+      <div class="flex items-center gap-2" style="background: rgba(255,255,255,0.06); padding: 0.3rem 0.65rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); width: 260px;" title="Cliquez pour modifier le titre de la vidéo">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--primary); flex-shrink:0;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+        <input type="text" id="header-project-title" placeholder="Titre de la vidéo..." style="background: transparent; border: none; outline: none; color: #fff; font-size: 0.85rem; font-weight: 700; width: 100%;" />
+      </div>
+
       <!-- Non-Destructive Tooltip Info Badge -->
       <div class="info-tooltip-badge" title="Toutes les coupes et réglages sont virtuels et préservent la vidéo YouTube originale.">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1060,7 +1066,31 @@
         
         <!-- TAB 1: SCRIPT & EVENTS BUILDER -->
         <div id="tab-pane-script" class="flex flex-col gap-3">
-          
+
+          <!-- Video Metadata & Title Editor -->
+          <div class="inspector-card">
+            <div class="inspector-card-title">
+              <span data-i18n="videoMeta">Métadonnées de la vidéo</span>
+              <span class="badge badge-raw" id="inspector-video-badge">ID: ...</span>
+            </div>
+            <div class="flex flex-col gap-2">
+              <div>
+                <label style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">Titre de la vidéo / projet</label>
+                <input type="text" id="inspector-video-title" class="input-field" placeholder="Ex: Ma super vidéo interactive..." />
+              </div>
+              <div class="flex gap-2">
+                <div class="flex-1">
+                  <label style="font-size:0.7rem; color:var(--text-muted);">Auteur / Chaîne</label>
+                  <input type="text" id="inspector-video-author" class="input-field" placeholder="Auteur..." />
+                </div>
+                <div class="flex-1">
+                  <label style="font-size:0.7rem; color:var(--text-muted);">ID YouTube</label>
+                  <input type="text" id="inspector-video-id" class="input-field font-mono" readonly style="opacity:0.75; background:#040711;" />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Mode Switch (GAME vs VIRTUAL RUN) -->
           <div class="inspector-card">
             <div class="inspector-card-title">
@@ -1323,15 +1353,50 @@
   <div id="modal-add-video" class="modal-backdrop hidden">
     <div class="modal-box">
       <div class="modal-header">
-        <h3 style="font-weight:700; font-size:1rem;" data-i18n="addVideoTitle">Ajouter une ou plusieurs vidéos YouTube</h3>
+        <h3 style="font-weight:700; font-size:1rem;" data-i18n="addVideoTitle">Ajouter une vidéo YouTube</h3>
         <button class="btn btn-sm btn-icon btn-close-modal">✕</button>
       </div>
       <div class="modal-body">
-        <p style="font-size:0.8rem; color:var(--text-muted);" data-i18n="addVideoDesc">
-          Collez un lien YouTube standard, un lien raccourci youtu.be, un Shorts, ou l'identifiant 11 caractères.
-          Vous pouvez aussi coller plusieurs liens (un par ligne).
-        </p>
-        <textarea id="input-yt-urls" class="textarea-field font-mono" rows="4" placeholder="https://www.youtube.com/watch?v=...&#10;https://youtu.be/..."></textarea>
+        <!-- Switch Single / Multi -->
+        <div class="flex gap-2">
+          <button type="button" id="tab-add-single" class="btn btn-sm btn-primary flex-1">Lien direct avec Titre</button>
+          <button type="button" id="tab-add-multi" class="btn btn-sm flex-1">Import multiple</button>
+        </div>
+
+        <!-- Single video pane -->
+        <div id="pane-add-single" class="flex flex-col gap-3">
+          <div>
+            <label style="font-size:0.75rem; font-weight:600; color:var(--text-main);">Lien ou ID YouTube</label>
+            <input type="text" id="input-single-url" class="input-field" placeholder="https://www.youtube.com/watch?v=... ou ID (ex: ScMzIvxBSi4)" />
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; font-weight:600; color:var(--text-main);">Titre de la vidéo</label>
+            <div class="flex gap-2">
+              <input type="text" id="input-single-title" class="input-field" placeholder="Ex: Démo Parkour Action Run..." />
+              <button type="button" id="btn-fetch-yt-title" class="btn btn-sm" title="Récupérer le titre officiel depuis YouTube">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+                <span>Titre Auto</span>
+              </button>
+            </div>
+            <p style="font-size:0.68rem; color:var(--text-muted); margin-top:2px;">Vous pouvez saisir votre propre titre personnalisé ou cliquer sur "Titre Auto".</p>
+          </div>
+
+          <div>
+            <label style="font-size:0.75rem; font-weight:600; color:var(--text-main);">Type de vidéo interactif</label>
+            <select id="input-single-type" class="select-field">
+              <option value="game">🎮 Jeu d'Action (obstacles, score, vies)</option>
+              <option value="virtual_run">🏃 Virtual Run (course sur tapis, vitesse rythmée)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Multiple videos pane -->
+        <div id="pane-add-multi" class="flex flex-col gap-2 hidden">
+          <p style="font-size:0.78rem; color:var(--text-muted);">Collez plusieurs liens YouTube (un par ligne) :</p>
+          <textarea id="input-yt-urls" class="textarea-field font-mono" rows="4" placeholder="https://www.youtube.com/watch?v=...&#10;https://youtu.be/..."></textarea>
+        </div>
+
         <div id="add-video-error" class="badge badge-game hidden" style="align-self:flex-start; text-transform:none;"></div>
       </div>
       <div class="modal-footer">
@@ -3147,19 +3212,57 @@
       ];
 
       async function sendPromptToGemini(userPrompt) {
-        if (!geminiApiKey) {
-          appendAiMessage("bot", "⚠️ Clé API Gemini manquante. Veuillez cliquer sur l'engrenage des Paramètres en haut à droite pour renseigner votre clé API Google Gemini.");
-          return;
-        }
-
         appendAiMessage("user", userPrompt);
         appendAiMessage("bot", "⏳ Analyse en cours avec Gemini...");
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;
+        // 1. Try server-side endpoint first (uses server GEMINI_API_KEY from AI Studio)
+        try {
+          const resp = await fetch('/api/gemini/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: userPrompt,
+              projectState: currentProject,
+              apiKey: geminiApiKey || undefined
+            })
+          });
 
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.functionCalls && data.functionCalls.length > 0) {
+              for (const fc of data.functionCalls) {
+                handleAiToolExecution(fc.name, fc.args);
+              }
+            }
+            if (data.text) {
+              updateLastAiMessage(data.text);
+            } else if (!data.functionCalls || data.functionCalls.length === 0) {
+              updateLastAiMessage("Action réalisée.");
+            }
+            return;
+          } else {
+            const errJson = await resp.json().catch(() => ({}));
+            // If server returned an explicit error and no user key is set, show it
+            if (!geminiApiKey && errJson.error) {
+              updateLastAiMessage(`❌ ${errJson.error}`);
+              return;
+            }
+          }
+        } catch (serverErr) {
+          console.warn("Server endpoint failed, testing client-side fallback...", serverErr);
+        }
+
+        // 2. Fallback to client-side direct REST call if user provided a key in Settings
+        if (!geminiApiKey) {
+          updateLastAiMessage("⚠️ Impossible de contacter le serveur Gemini et aucune clé personnalisée n'est configurée dans Paramètres.");
+          return;
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;
         const systemInstruction = `Tu es l'assistant de VideoPlay Studio, un studio de montage vidéo interactif pour YouTube.
 Tu as accès aux outils pour piloter le projet en direct :
 - Les temps sont TOUJOURS en secondes réelles de la vidéo originale.
+- Si l'utilisateur demande de changer le titre, appelle 'set_title'.
 - Ne place jamais d'obstacles à l'intérieur des coupes (cuts) ou en dehors de la plage trimStart/trimEnd.
 - Actions possibles : jump_small, jump_long, move_left, move_right, slide_down, punch, slap.
 Réponds de manière concise et appelle les outils appropriés pour satisfaire la demande.`;
@@ -3191,9 +3294,7 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
           const part = candidate?.content?.parts?.[0];
 
           if (part?.functionCall) {
-            // Execute real tool call
-            const toolCall = part.functionCall;
-            handleAiToolExecution(toolCall.name, toolCall.args);
+            handleAiToolExecution(part.functionCall.name, part.functionCall.args);
           } else if (part?.text) {
             updateLastAiMessage(part.text);
           } else {
@@ -3210,6 +3311,12 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
         let reply = "";
 
         switch (toolName) {
+          case 'set_title':
+            currentProject.name = args.title;
+            currentProject.title = args.title;
+            if (currentProject.script?.video) currentProject.script.video.title = args.title;
+            reply = `✅ Titre mis à jour : "${args.title}"`;
+            break;
           case 'set_trim':
             currentProject.trimStart = args.start;
             currentProject.trimEnd = args.end;
@@ -3238,9 +3345,12 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
             reply = `✅ Obstacle ${args.action} placé à ${args.time}s.`;
             break;
           case 'generate_script_from_video':
-            // Generate standard balanced obstacles
             currentProject.script = currentProject.script || {};
             currentProject.script.type = args.mode;
+            if (args.title) {
+              currentProject.name = args.title;
+              currentProject.title = args.title;
+            }
             if (args.mode === 'game') {
               const dur = currentProject.trimEnd - currentProject.trimStart;
               const step = dur / 7;
@@ -3294,6 +3404,32 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
       // ========================================================================
       function syncUI() {
         if (!currentProject) return;
+
+        // Sync Title Inputs (Header & Inspector)
+        const headerTitleEl = document.getElementById('header-project-title');
+        if (headerTitleEl && document.activeElement !== headerTitleEl) {
+          headerTitleEl.value = currentProject.name || currentProject.title || '';
+        }
+
+        const inspTitleEl = document.getElementById('inspector-video-title');
+        if (inspTitleEl && document.activeElement !== inspTitleEl) {
+          inspTitleEl.value = currentProject.title || currentProject.name || '';
+        }
+
+        const inspAuthorEl = document.getElementById('inspector-video-author');
+        if (inspAuthorEl && document.activeElement !== inspAuthorEl) {
+          inspAuthorEl.value = currentProject.author || '';
+        }
+
+        const inspIdEl = document.getElementById('inspector-video-id');
+        if (inspIdEl) {
+          inspIdEl.value = currentProject.youtubeId || '';
+        }
+
+        const inspBadgeEl = document.getElementById('inspector-video-badge');
+        if (inspBadgeEl) {
+          inspBadgeEl.textContent = 'ID: ' + currentProject.youtubeId;
+        }
 
         // Render project library list
         renderProjectList();
@@ -3371,14 +3507,31 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
                 <div class="video-meta">
                   <span class="badge ${badgeType}">${badgeLabel}</span>
                   <div class="flex gap-1">
-                    <button class="btn btn-icon btn-sm btn-delete-proj" title="Supprimer" style="padding:1px 3px;">✕</button>
+                    <button class="btn btn-icon btn-sm btn-rename-proj" title="Renommer la vidéo" style="padding:1px 4px; color:#93c5fd;">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    </button>
+                    <button class="btn btn-icon btn-sm btn-delete-proj" title="Supprimer" style="padding:1px 4px;">✕</button>
                   </div>
                 </div>
               </div>
             `;
 
             card.addEventListener('click', (e) => {
-              if (e.target.classList.contains('btn-delete-proj')) {
+              if (e.target.closest('.btn-rename-proj')) {
+                e.stopPropagation();
+                const newTitle = prompt("Nouveau titre pour cette vidéo :", p.name);
+                if (newTitle && newTitle.trim()) {
+                  pushUndoState();
+                  p.name = newTitle.trim();
+                  p.title = newTitle.trim();
+                  if (p.script?.video) p.script.video.title = newTitle.trim();
+                  saveProjects();
+                  syncUI();
+                  showToast("Titre mis à jour !");
+                }
+                return;
+              }
+              if (e.target.closest('.btn-delete-proj')) {
                 e.stopPropagation();
                 if (projects.length <= 1) {
                   showToast("Impossible de supprimer la dernière vidéo.");
@@ -3687,9 +3840,117 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
           setLanguage(newLang);
         });
 
+        // Editable Title Sync (Header & Inspector)
+        const headerTitleInput = document.getElementById('header-project-title');
+        const inspectorTitleInput = document.getElementById('inspector-video-title');
+        const inspectorAuthorInput = document.getElementById('inspector-video-author');
+
+        function updateCurrentTitle(newTitle) {
+          if (!currentProject || !newTitle.trim()) return;
+          currentProject.name = newTitle.trim();
+          currentProject.title = newTitle.trim();
+          if (currentProject.script?.video) currentProject.script.video.title = newTitle.trim();
+          saveProjects();
+          renderProjectList();
+          renderJsonOutput();
+        }
+
+        if (headerTitleInput) {
+          headerTitleInput.addEventListener('input', (e) => {
+            updateCurrentTitle(e.target.value);
+            if (inspectorTitleInput && document.activeElement !== inspectorTitleInput) {
+              inspectorTitleInput.value = e.target.value;
+            }
+          });
+        }
+
+        if (inspectorTitleInput) {
+          inspectorTitleInput.addEventListener('input', (e) => {
+            updateCurrentTitle(e.target.value);
+            if (headerTitleInput && document.activeElement !== headerTitleInput) {
+              headerTitleInput.value = e.target.value;
+            }
+          });
+        }
+
+        if (inspectorAuthorInput) {
+          inspectorAuthorInput.addEventListener('input', (e) => {
+            if (!currentProject) return;
+            currentProject.author = e.target.value.trim();
+            saveProjects();
+            renderJsonOutput();
+          });
+        }
+
+        // Add Video Modal Tabs (Single vs Multi)
+        let isSingleAddMode = true;
+        const tabAddSingle = document.getElementById('tab-add-single');
+        const tabAddMulti = document.getElementById('tab-add-multi');
+        const paneAddSingle = document.getElementById('pane-add-single');
+        const paneAddMulti = document.getElementById('pane-add-multi');
+
+        if (tabAddSingle && tabAddMulti) {
+          tabAddSingle.addEventListener('click', () => {
+            isSingleAddMode = true;
+            tabAddSingle.className = "btn btn-sm btn-primary flex-1";
+            tabAddMulti.className = "btn btn-sm flex-1";
+            paneAddSingle.classList.remove('hidden');
+            paneAddMulti.classList.add('hidden');
+          });
+
+          tabAddMulti.addEventListener('click', () => {
+            isSingleAddMode = false;
+            tabAddMulti.className = "btn btn-sm btn-primary flex-1";
+            tabAddSingle.className = "btn btn-sm flex-1";
+            paneAddMulti.classList.remove('hidden');
+            paneAddSingle.classList.add('hidden');
+          });
+        }
+
+        // Auto Fetch Title via oEmbed
+        const singleUrlInput = document.getElementById('input-single-url');
+        const singleTitleInput = document.getElementById('input-single-title');
+        const btnFetchYtTitle = document.getElementById('btn-fetch-yt-title');
+
+        async function fetchYouTubeTitle() {
+          const raw = singleUrlInput.value.trim();
+          const ytid = parseYouTubeID(raw);
+          if (!ytid) {
+            showToast("Veuillez d'abord entrer un lien ou ID YouTube valide.");
+            return;
+          }
+          singleTitleInput.placeholder = "Chargement du titre YouTube...";
+          try {
+            const resp = await fetch(`/api/oembed?videoId=${ytid}`);
+            if (resp.ok) {
+              const data = await resp.json();
+              if (data.title) {
+                singleTitleInput.value = data.title;
+                showToast("Titre récupéré : " + data.title);
+                return;
+              }
+            }
+          } catch (e) {}
+          singleTitleInput.value = "Vidéo " + ytid;
+          singleTitleInput.placeholder = "Ex: Démo Parkour Action Run...";
+        }
+
+        if (btnFetchYtTitle) {
+          btnFetchYtTitle.addEventListener('click', fetchYouTubeTitle);
+        }
+
+        if (singleUrlInput) {
+          singleUrlInput.addEventListener('change', () => {
+            if (!singleTitleInput.value.trim()) {
+              fetchYouTubeTitle();
+            }
+          });
+        }
+
         // Modals (Add, Settings, Help)
         document.getElementById('btn-open-add-modal').addEventListener('click', () => {
           document.getElementById('modal-add-video').classList.remove('hidden');
+          setTimeout(() => singleUrlInput?.focus(), 50);
         });
         document.getElementById('btn-settings').addEventListener('click', () => {
           document.getElementById('input-api-key').value = geminiApiKey;
@@ -3718,46 +3979,105 @@ Réponds de manière concise et appelle les outils appropriés pour satisfaire l
 
         // Add Video Submit
         document.getElementById('btn-submit-add-video').addEventListener('click', () => {
-          const text = document.getElementById('input-yt-urls').value.trim();
-          if (!text) return;
-
-          const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-          let addedCount = 0;
-
-          for (const line of lines) {
-            const ytid = parseYouTubeID(line);
-            if (ytid) {
-              const newProj = {
-                id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-                name: 'Vidéo ' + ytid,
-                youtubeId: ytid,
-                title: 'Vidéo ' + ytid,
-                duration: 60.0,
-                trimStart: 0,
-                trimEnd: 60.0,
-                cuts: [],
-                audio: { muted: false },
-                script: {
-                  schemaVersion: "1.0",
-                  type: "game",
-                  timeline: []
-                }
-              };
-              projects.unshift(newProj);
-              addedCount++;
+          if (isSingleAddMode) {
+            const rawUrl = singleUrlInput.value.trim();
+            const ytid = parseYouTubeID(rawUrl);
+            if (!ytid) {
+              showToast("Lien YouTube invalide. Entrez une URL watch?v=, youtu.be, shorts ou un ID 11 caractères.");
+              return;
             }
-          }
 
-          if (addedCount > 0) {
+            const title = singleTitleInput.value.trim() || ('Vidéo ' + ytid);
+            const scriptType = document.getElementById('input-single-type').value || 'game';
+
+            const newProj = {
+              id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+              name: title,
+              youtubeId: ytid,
+              title: title,
+              author: 'Auteur YouTube',
+              duration: 60.0,
+              trimStart: 0,
+              trimEnd: 60.0,
+              cuts: [],
+              audio: { muted: false },
+              playbackRate: 1.0,
+              script: {
+                schemaVersion: "1.0",
+                type: scriptType,
+                timeline: [],
+                rules: scriptType === 'game' ? {
+                  maxMisses: 5,
+                  maxLives: 3,
+                  timingWindowMs: { perfect: 120, good: 280 },
+                  scoring: { perfect: 100, good: 50, comboMultiplierStep: 5, maxMultiplier: 4, failPenalty: 0 },
+                  winCondition: "reach_end",
+                  minScoreToWin: 500,
+                  loseCondition: "misses>=maxMisses"
+                } : undefined,
+                virtualRun: scriptType === 'virtual_run' ? {
+                  route: { name: title, location: "Parcours", totalDistanceKm: 5, elevationGainM: 100, terrain: "road" },
+                  defaultPaceMinPerKm: 6.0,
+                  speedMapping: { minSpeedKmh: 4, maxSpeedKmh: 16, videoPlaybackRateMin: 0.5, videoPlaybackRateMax: 2.0 },
+                  segments: [{ start: 0, end: 60, distanceKm: 5, slopePercent: 1, recommendedSpeedKmh: 10, label: "Allure" }],
+                  checkpoints: [],
+                  input: { mode: "manual-slider" }
+                } : undefined
+              }
+            };
+
+            projects.unshift(newProj);
             currentProject = projects[0];
             saveProjects();
             initPlayer();
             syncUI();
             document.getElementById('modal-add-video').classList.add('hidden');
-            document.getElementById('input-yt-urls').value = '';
-            showToast(`${addedCount} vidéo(s) ajoutée(s) !`);
+            singleUrlInput.value = '';
+            singleTitleInput.value = '';
+            showToast(`Vidéo "${title}" ajoutée avec succès !`);
           } else {
-            showToast("Lien YouTube invalide.");
+            // Multi-link mode
+            const text = document.getElementById('input-yt-urls').value.trim();
+            if (!text) return;
+
+            const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+            let addedCount = 0;
+
+            for (const line of lines) {
+              const ytid = parseYouTubeID(line);
+              if (ytid) {
+                const newProj = {
+                  id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                  name: 'Vidéo ' + ytid,
+                  youtubeId: ytid,
+                  title: 'Vidéo ' + ytid,
+                  duration: 60.0,
+                  trimStart: 0,
+                  trimEnd: 60.0,
+                  cuts: [],
+                  audio: { muted: false },
+                  script: {
+                    schemaVersion: "1.0",
+                    type: "game",
+                    timeline: []
+                  }
+                };
+                projects.unshift(newProj);
+                addedCount++;
+              }
+            }
+
+            if (addedCount > 0) {
+              currentProject = projects[0];
+              saveProjects();
+              initPlayer();
+              syncUI();
+              document.getElementById('modal-add-video').classList.add('hidden');
+              document.getElementById('input-yt-urls').value = '';
+              showToast(`${addedCount} vidéo(s) ajoutée(s) !`);
+            } else {
+              showToast("Aucun lien YouTube valide détecté.");
+            }
           }
         });
 
