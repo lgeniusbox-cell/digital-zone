@@ -1,0 +1,3842 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VideoPlay Studio - Éditeur de Vidéos Interactives & Virtual Run</title>
+  <meta name="description" content="Transformez vos vidéos YouTube en jeux d'action interactifs et parcours de course virtuelle (treadmill) avec un montage non-destructif en direct et l'IA Gemini." />
+  <meta property="og:title" content="VideoPlay Studio - Éditeur de Vidéos Interactives & Virtual Run" />
+  <meta property="og:description" content="Transformez vos vidéos YouTube en jeux d'action interactifs et parcours de course virtuelle (treadmill) avec un montage non-destructif en direct et l'IA Gemini." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       RESET & BASE STYLING
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-main: #090d16;
+      --bg-panel: #0f172a;
+      --bg-panel-alt: #162036;
+      --bg-card: #1e293b;
+      --bg-card-hover: #27354f;
+      --border-color: #27354f;
+      --border-focus: #3b82f6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent-game: #ec4899;
+      --accent-game-hover: #db2777;
+      --accent-run: #10b981;
+      --accent-run-hover: #059669;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --success: #10b981;
+      --cyan: #06b6d4;
+      --purple: #8b5cf6;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    code, pre, .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Utility classes */
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .gap-1 { gap: 0.25rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .gap-4 { gap: 1rem; }
+    .flex-1 { flex: 1 1 0%; }
+    .w-full { width: 100%; }
+
+    /* Button Styles */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: var(--text-main);
+      background: var(--bg-card);
+      white-space: nowrap;
+    }
+    .btn:hover {
+      background: var(--bg-card-hover);
+      border-color: #3b4d6b;
+    }
+    .btn:active {
+      transform: translateY(1px);
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+    .btn-game {
+      background: var(--accent-game);
+      color: white;
+    }
+    .btn-game:hover {
+      background: var(--accent-game-hover);
+      border-color: var(--accent-game-hover);
+    }
+    .btn-run {
+      background: var(--accent-run);
+      color: white;
+    }
+    .btn-run:hover {
+      background: var(--accent-run-hover);
+      border-color: var(--accent-run-hover);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+    .btn-sm {
+      padding: 0.3rem 0.55rem;
+      font-size: 0.75rem;
+    }
+    .btn-icon {
+      padding: 0.45rem;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-game {
+      background: rgba(236, 72, 153, 0.18);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.35);
+    }
+    .badge-run {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .badge-raw {
+      background: rgba(148, 163, 184, 0.18);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    /* Input & Select */
+    .input-field, .select-field, .textarea-field {
+      width: 100%;
+      background: #090e1a;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.83rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .input-field:focus, .select-field:focus, .textarea-field:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-color);
+      height: 58px;
+      padding: 0 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      z-index: 40;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #ec4899, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+    }
+
+    .info-tooltip-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 0.3rem 0.65rem;
+      font-size: 0.74rem;
+      color: #93c5fd;
+      max-width: 480px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Main 3-Column Layout */
+    .app-workspace {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 58px);
+      overflow: hidden;
+    }
+
+    /* Sidebar: Left (Library) */
+    .sidebar {
+      width: 290px;
+      min-width: 260px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sidebar-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .video-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .video-card {
+      display: flex;
+      gap: 0.6rem;
+      padding: 0.55rem;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .video-card:hover {
+      background: var(--bg-card-hover);
+      border-color: #3b4d6b;
+    }
+    .video-card.active {
+      border-color: var(--primary);
+      background: #192742;
+    }
+    .video-thumb {
+      width: 72px;
+      height: 48px;
+      border-radius: 4px;
+      background: #000;
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .video-thumb-duration {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      background: rgba(0, 0, 0, 0.8);
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 3px;
+      border-radius: 2px;
+    }
+    .video-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.2rem;
+    }
+    .video-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-main);
+    }
+    .video-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* Center: Player + Timeline */
+    .center-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #060911;
+      min-width: 480px;
+    }
+
+    .player-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 0.75rem;
+      background: radial-gradient(circle at center, #10192e 0%, #060911 100%);
+      overflow: hidden;
+    }
+
+    .player-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 960px;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+    #player-embed, #player-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Player Status & Error Overlays */
+    .player-error-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      z-index: 30;
+      gap: 1rem;
+    }
+
+    /* Timeline Section */
+    .timeline-section {
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      height: 250px;
+      min-height: 220px;
+      user-select: none;
+    }
+
+    .timeline-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.45rem 1rem;
+      background: var(--bg-panel-alt);
+      border-bottom: 1px solid var(--border-color);
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+    .time-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .time-original { color: var(--text-main); }
+    .time-edited { color: var(--success); }
+
+    .timeline-canvas-container {
+      flex: 1;
+      position: relative;
+      overflow-x: auto;
+      overflow-y: hidden;
+      background: #090e1a;
+      cursor: crosshair;
+    }
+    #timeline-canvas {
+      display: block;
+      height: 100%;
+    }
+
+    /* Right Panel: Inspector / Script Builder */
+    .inspector-panel {
+      width: 360px;
+      min-width: 320px;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .inspector-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-panel-alt);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 0.65rem 0.5rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: center;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+    }
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(59, 130, 246, 0.06);
+    }
+
+    .inspector-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .inspector-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .inspector-card-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Event Table */
+    .events-table-wrapper {
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: #090e1a;
+    }
+    .events-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+    .events-table th {
+      background: #162036;
+      padding: 0.4rem 0.5rem;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+    }
+    .events-table td {
+      padding: 0.4rem 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+    .events-table tr:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* JSON Editor & Preview */
+    .json-code-box {
+      background: #060911;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem;
+      font-size: 0.75rem;
+      color: #38bdf8;
+      max-height: 380px;
+      overflow: auto;
+      white-space: pre;
+    }
+
+    /* Floating AI Chat Assistant */
+    .ai-widget {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .ai-fab {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4);
+      cursor: pointer;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .ai-fab:hover {
+      transform: scale(1.08);
+      box-shadow: 0 10px 30px rgba(236, 72, 153, 0.6);
+    }
+    .ai-panel {
+      width: 380px;
+      height: 520px;
+      background: var(--bg-panel);
+      border: 1px solid #3b4d6b;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+    .ai-header {
+      padding: 0.75rem 1rem;
+      background: linear-gradient(90deg, #1e1b4b, #2e1065);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ai-messages {
+      flex: 1;
+      padding: 0.85rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+    }
+    .ai-msg {
+      padding: 0.6rem 0.85rem;
+      border-radius: var(--radius-md);
+      max-width: 90%;
+      line-height: 1.4;
+    }
+    .ai-msg-bot {
+      background: #1e293b;
+      color: var(--text-main);
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .ai-msg-user {
+      background: var(--primary);
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+    .ai-chips {
+      padding: 0.4rem 0.85rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      background: #090e1a;
+      border-top: 1px solid var(--border-color);
+    }
+    .ai-chip {
+      background: #1e293b;
+      color: #93c5fd;
+      border: 1px solid #334155;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .ai-chip:hover {
+      background: #2563eb;
+      color: white;
+      border-color: #3b82f6;
+    }
+    .ai-input-area {
+      padding: 0.65rem 0.85rem;
+      background: var(--bg-panel-alt);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Modal Component */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .modal-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 580px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 1rem 1.25rem;
+      background: var(--bg-panel-alt);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .modal-footer {
+      padding: 0.85rem 1.25rem;
+      background: var(--bg-panel-alt);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.6rem;
+    }
+
+    /* PLAY / TEST FULLSCREEN MODE */
+    #play-mode-overlay {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .play-video-wrapper {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #play-canvas-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .play-hud {
+      position: absolute;
+      top: 1rem;
+      left: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      pointer-events: auto;
+    }
+    .play-exit-btn {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Virtual Run HUD */
+    .run-hud {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      z-index: 20;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+      pointer-events: auto;
+    }
+    .run-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .run-stat-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent-run);
+    }
+    .run-stat-lbl {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    /* Webcam Motion PIP */
+    #webcam-pip {
+      position: absolute;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      width: 140px;
+      height: 105px;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--accent-run);
+      background: #000;
+      overflow: hidden;
+      z-index: 20;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    }
+    #webcam-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    #webcam-diff-canvas {
+      display: none;
+    }
+
+    /* Toast Notification */
+    #toast-container {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+    .toast {
+      padding: 0.65rem 1rem;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 0.82rem;
+      font-weight: 600;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      pointer-events: auto;
+      animation: slideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       HEADER NAVBAR
+       ========================================================================== -->
+  <header>
+    <div class="flex items-center gap-4">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </div>
+        <span>VideoPlay <span style="color:#ec4899;">Studio</span></span>
+      </div>
+
+      <!-- Non-Destructive Tooltip Info Badge -->
+      <div class="info-tooltip-badge" title="Toutes les coupes et réglages sont virtuels et préservent la vidéo YouTube originale.">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span data-i18n="infoTooltip">Montage non-destructif : votre vidéo YouTube n'est jamais modifiée. Coupes et trim s'appliquent en direct.</span>
+      </div>
+    </div>
+
+    <!-- Right Header Actions -->
+    <div class="flex items-center gap-2">
+      <!-- Quick Play/Test Button -->
+      <button id="btn-play-mode" class="btn btn-primary" title="Lancer le mode Jeu / Run Interactif">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        <span data-i18n="playModeBtn">Tester le Jeu / Run</span>
+      </button>
+
+      <!-- Language Toggle (FR / EN) -->
+      <button id="btn-lang-toggle" class="btn btn-sm" title="Changer de langue">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        <span id="lang-label">FR</span>
+      </button>
+
+      <!-- Help Guide -->
+      <button id="btn-help" class="btn btn-sm" title="Guide & Raccourcis">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <span data-i18n="help">Aide</span>
+      </button>
+
+      <!-- Settings -->
+      <button id="btn-settings" class="btn btn-sm" title="Paramètres & Clé API Gemini">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       MAIN APP WORKSPACE
+       ========================================================================== -->
+  <div class="app-workspace">
+
+    <!-- LEFT SIDEBAR: Library & Add Video -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="flex items-center justify-between">
+          <span style="font-weight:700; font-size:0.85rem;" data-i18n="myVideos">Mes Vidéos</span>
+          <button id="btn-open-add-modal" class="btn btn-sm btn-primary" title="Ajouter un lien YouTube">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span data-i18n="addVideo">Ajouter</span>
+          </button>
+        </div>
+        <!-- Search filter -->
+        <input type="text" id="library-search" class="input-field" placeholder="Rechercher..." data-i18n-ph="searchVideos" />
+      </div>
+
+      <!-- Project List -->
+      <div id="video-list" class="video-list">
+        <!-- Rendered via JavaScript -->
+      </div>
+    </aside>
+
+    <!-- CENTER: Player + Timeline -->
+    <main class="center-stage">
+      
+      <!-- Video Player Viewport -->
+      <div class="player-section">
+        <div class="player-wrapper">
+          <div id="player-container"></div>
+
+          <!-- Embedding Error Overlay (Shown if video cannot be embedded) -->
+          <div id="player-error" class="player-error-overlay hidden">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <h3 id="player-error-title" style="font-weight:700; color:#ef4444;">Erreur de lecture YouTube</h3>
+            <p id="player-error-desc" style="font-size:0.85rem; color:#cbd5e1; max-width:440px;">
+              Cette vidéo YouTube ne permet pas l'intégration externe. Rendez-vous sur YouTube Studio et vérifiez que l'option « Autoriser l'intégration » est bien cochée et que la vidéo est Publique ou Non répertoriée.
+            </p>
+            <button id="btn-error-reload" class="btn btn-primary btn-sm">Réessayer</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline & Editing Deck -->
+      <div class="timeline-section">
+        <!-- Timeline Controls & Counters -->
+        <div class="timeline-toolbar">
+          <!-- Playback Controls -->
+          <div class="flex items-center gap-1">
+            <button id="btn-play-pause" class="btn btn-sm btn-icon" title="Lecture / Pause (Espace)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
+            <button id="btn-seek-start" class="btn btn-sm btn-icon" title="Début du trim">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>
+            </button>
+            <button id="btn-seek-left" class="btn btn-sm btn-icon" title="Reculer 1s (←)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button id="btn-seek-right" class="btn btn-sm btn-icon" title="Avancer 1s (→)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+
+          <!-- Time Counters: Original vs Edited -->
+          <div class="time-counter">
+            <span class="time-original" id="time-display-orig">00:00.0</span>
+            <span style="color:var(--text-dim);">/</span>
+            <span class="time-edited" id="time-display-edited" title="Temps après coupes et trim">00:00.0</span>
+            <span style="font-size:0.7rem; color:var(--text-muted); font-weight:normal;" id="time-display-duration">(00:00.0)</span>
+          </div>
+
+          <!-- Edit Actions -->
+          <div class="flex items-center gap-1">
+            <button id="btn-set-in" class="btn btn-sm" title="Point In (I)">In</button>
+            <button id="btn-set-out" class="btn btn-sm" title="Point Out (O)">Out</button>
+            <button id="btn-split" class="btn btn-sm" title="Couper au curseur (S)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>
+              <span data-i18n="split">Scinder</span>
+            </button>
+            <button id="btn-toggle-mute" class="btn btn-sm" title="Couper / Activer le son (M)">
+              <svg id="icon-mute-state" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+              <span id="label-mute-state" data-i18n="mute">Audio</span>
+            </button>
+            <button id="btn-preview-edited" class="btn btn-sm btn-primary" title="Aperçu du montage final en direct">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span data-i18n="previewEdited">Aperçu</span>
+            </button>
+
+            <!-- Undo / Redo -->
+            <button id="btn-undo" class="btn btn-sm btn-icon" title="Annuler (Ctrl+Z)" disabled>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
+            </button>
+            <button id="btn-redo" class="btn btn-sm btn-icon" title="Rétablir (Ctrl+Y)" disabled>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>
+            </button>
+
+            <!-- Zoom & Snapping -->
+            <div style="width:1px; height:18px; background:var(--border-color); margin:0 2px;"></div>
+            <button id="btn-zoom-fit" class="btn btn-sm btn-icon" title="Ajuster à l'écran">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+            </button>
+            <button id="btn-zoom-out" class="btn btn-sm btn-icon" title="Dézoomer (-)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            </button>
+            <button id="btn-zoom-in" class="btn btn-sm btn-icon" title="Zoomer (+)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            </button>
+            <button id="btn-toggle-snap" class="btn btn-sm btn-icon" title="Magnétisme (Snapping)">
+              <svg id="icon-snap" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m8 17 4 4 4-4"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Canvas Timeline Container -->
+        <div id="timeline-container" class="timeline-canvas-container">
+          <canvas id="timeline-canvas"></canvas>
+        </div>
+      </div>
+    </main>
+
+    <!-- RIGHT PANEL: Inspector & Script Builder -->
+    <aside class="inspector-panel">
+      <!-- Tabs -->
+      <div class="inspector-tabs">
+        <button class="tab-btn active" data-tab="script" data-i18n="tabScript">Script & Événements</button>
+        <button class="tab-btn" data-tab="edl" data-i18n="tabEdl">Montage & Coupes</button>
+        <button class="tab-btn" data-tab="json" data-i18n="tabJson">JSON Brut</button>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="inspector-content">
+        
+        <!-- TAB 1: SCRIPT & EVENTS BUILDER -->
+        <div id="tab-pane-script" class="flex flex-col gap-3">
+          
+          <!-- Mode Switch (GAME vs VIRTUAL RUN) -->
+          <div class="inspector-card">
+            <div class="inspector-card-title">
+              <span data-i18n="scriptType">Type de script interactif</span>
+              <span id="script-mode-badge" class="badge badge-game">JEU D'ACTION</span>
+            </div>
+            <div class="flex gap-2">
+              <button id="btn-mode-game" class="btn btn-sm btn-game flex-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4m9-2h.01m3 0h.01"></path></svg>
+                <span>Jeu Action</span>
+              </button>
+              <button id="btn-mode-run" class="btn btn-sm btn-run flex-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                <span>Virtual Run</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- GAME MODE VIEW -->
+          <div id="game-controls-container" class="flex flex-col gap-3">
+            <div class="inspector-card">
+              <div class="inspector-card-title">
+                <span data-i18n="gameRules">Règles & Difficulté</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="flex-1">
+                  <label style="font-size:0.7rem; color:var(--text-muted);" data-i18n="lives">Vies</label>
+                  <input type="number" id="game-rule-lives" class="input-field" min="1" max="10" value="3" />
+                </div>
+                <div class="flex-1">
+                  <label style="font-size:0.7rem; color:var(--text-muted);" data-i18n="maxMisses">Miss Max</label>
+                  <input type="number" id="game-rule-misses" class="input-field" min="1" max="20" value="5" />
+                </div>
+                <div class="flex-1">
+                  <label style="font-size:0.7rem; color:var(--text-muted);" data-i18n="windowMs">Fenêtre (ms)</label>
+                  <input type="number" id="game-rule-window" class="input-field" min="50" max="600" value="250" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Events Table -->
+            <div class="inspector-card">
+              <div class="inspector-card-title">
+                <span data-i18n="timelineEvents">Événements action</span>
+                <button id="btn-add-event-now" class="btn btn-sm btn-primary" title="Ajouter un événement au curseur actuel (Touches 1-7)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  <span data-i18n="addEvent">Ajouter</span>
+                </button>
+              </div>
+
+              <!-- Live Record Hint -->
+              <p style="font-size:0.72rem; color:var(--text-muted);">
+                💡 <span data-i18n="recordHotkeys">En lecture, pressez <strong>1 à 7</strong> pour placer un obstacle en direct !</span>
+              </p>
+
+              <!-- Events List Table -->
+              <div class="events-table-wrapper">
+                <table class="events-table">
+                  <thead>
+                    <tr>
+                      <th data-i18n="time">Temps</th>
+                      <th data-i18n="action">Action</th>
+                      <th data-i18n="hint">Indice</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="events-table-body">
+                    <!-- Populated via JS -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Quick Shift Times -->
+              <div class="flex items-center justify-between gap-1">
+                <span style="font-size:0.7rem; color:var(--text-muted);">Décaler tout :</span>
+                <div class="flex gap-1">
+                  <button id="btn-shift-minus" class="btn btn-sm">-0.5s</button>
+                  <button id="btn-shift-plus" class="btn btn-sm">+0.5s</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIRTUAL RUN MODE VIEW -->
+          <div id="run-controls-container" class="flex flex-col gap-3 hidden">
+            <div class="inspector-card">
+              <div class="inspector-card-title">
+                <span data-i18n="runConfig">Paramètres de la Course</span>
+              </div>
+              <div class="flex flex-col gap-2">
+                <div>
+                  <label style="font-size:0.7rem; color:var(--text-muted);" data-i18n="routeName">Nom du parcours</label>
+                  <input type="text" id="run-route-name" class="input-field" value="Sentier Alpin & Forêt" />
+                </div>
+                <div class="flex gap-2">
+                  <div class="flex-1">
+                    <label style="font-size:0.7rem; color:var(--text-muted);" data-i18n="distanceKm">Distance (km)</label>
+                    <input type="number" id="run-route-distance" class="input-field" step="0.1" value="5.0" />
+                  </div>
+                  <div class="flex-1">
+                    <label style="font-size:0.7rem; color:var(--text-muted);" data-i18n="elevationM">Dénivelé (m)</label>
+                    <input type="number" id="run-route-elevation" class="input-field" value="180" />
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:0.7rem; color:var(--text-muted);" data-i18n="inputMode">Mode de contrôle du coureur</label>
+                  <select id="run-input-mode" class="select-field">
+                    <option value="manual-slider">Curseur de vitesse manuel (Touches +/-)</option>
+                    <option value="tap-cadence">Cadence de frappe (Alternez 2 touches)</option>
+                    <option value="webcam-motion">Détection webcam (Mouvements du coureur)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Run Checkpoints Card -->
+            <div class="inspector-card">
+              <div class="inspector-card-title">
+                <span data-i18n="checkpoints">Checkpoints de parcours</span>
+                <button id="btn-add-checkpoint" class="btn btn-sm btn-run">+ Checkpoint</button>
+              </div>
+              <div id="checkpoints-list" class="flex flex-col gap-1">
+                <!-- Checkpoints dynamic list -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Schema Validation Warnings -->
+          <div id="validation-warnings" class="flex flex-col gap-1 hidden">
+            <!-- Warnings injected here -->
+          </div>
+        </div>
+
+        <!-- TAB 2: EDL & CUTS LIST -->
+        <div id="tab-pane-edl" class="flex flex-col gap-3 hidden">
+          <div class="inspector-card">
+            <div class="inspector-card-title">
+              <span data-i18n="trimSettings">Plage de Trim (Début & Fin)</span>
+            </div>
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label style="font-size:0.7rem; color:var(--text-muted);">Trim In (s)</label>
+                <input type="number" id="trim-in-input" class="input-field" step="0.1" min="0" value="0" />
+              </div>
+              <div class="flex-1">
+                <label style="font-size:0.7rem; color:var(--text-muted);">Trim Out (s)</label>
+                <input type="number" id="trim-out-input" class="input-field" step="0.1" min="0" value="0" />
+              </div>
+            </div>
+          </div>
+
+          <div class="inspector-card">
+            <div class="inspector-card-title">
+              <span data-i18n="cutsList">Coupes Supprimées (Sautées)</span>
+              <button id="btn-add-cut-now" class="btn btn-sm btn-danger">+ Coupe (2s)</button>
+            </div>
+            <div id="cuts-list" class="flex flex-col gap-1">
+              <!-- Rendered cuts list -->
+            </div>
+          </div>
+
+          <div class="inspector-card">
+            <div class="inspector-card-title">
+              <span data-i18n="keptSegments">Segments Conservés (EDL)</span>
+            </div>
+            <div id="edl-segments-list" class="flex flex-col gap-1" style="font-size:0.74rem; font-family:'JetBrains Mono'; color:var(--success);">
+              <!-- Rendered EDL segments -->
+            </div>
+          </div>
+
+          <button id="btn-reset-edits" class="btn btn-danger btn-sm w-full" data-i18n="resetEdits">
+            Réinitialiser toutes les coupes & trim
+          </button>
+        </div>
+
+        <!-- TAB 3: RAW JSON PREVIEW -->
+        <div id="tab-pane-json" class="flex flex-col gap-3 hidden">
+          <div class="flex items-center justify-between">
+            <span style="font-weight:700; font-size:0.8rem;" data-i18n="jsonPreview">Format Export VidéoPlay 1.0</span>
+            <div class="flex gap-1">
+              <button id="btn-copy-json" class="btn btn-sm" title="Copier le JSON">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Copier</span>
+              </button>
+              <button id="btn-download-json" class="btn btn-sm btn-primary" title="Télécharger le fichier script .json">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Télécharger</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Highlighted JSON Box -->
+          <pre id="json-preview-box" class="json-code-box">{}</pre>
+
+          <label class="btn btn-sm w-full" style="cursor:pointer; text-align:center;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <span data-i18n="importJson">Importer un script .json</span>
+            <input type="file" id="input-import-json" accept=".json" class="hidden" />
+          </label>
+        </div>
+
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ==========================================================================
+       FLOATING COLLAPSIBLE AI CHAT WIDGET
+       ========================================================================== -->
+  <div class="ai-widget">
+    <!-- Chat Panel (collapsible) -->
+    <div id="ai-chat-panel" class="ai-panel hidden">
+      <div class="ai-header">
+        <div class="flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
+          <span style="font-weight:700; font-size:0.85rem;">Assistant IA VidéoPlay</span>
+        </div>
+        <div class="flex items-center gap-1">
+          <button id="btn-close-ai" class="btn btn-sm btn-icon" style="background:transparent; border:none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Stream -->
+      <div id="ai-messages-list" class="ai-messages">
+        <div class="ai-msg ai-msg-bot">
+          👋 Bonjour ! Je suis votre assistant IA VideoPlay Studio. Je peux analyser cette vidéo YouTube, créer automatiquement un parcours d'obstacles, ajuster vos coupes ou générer une pochette visuelle.
+        </div>
+      </div>
+
+      <!-- Quick Action Chips -->
+      <div class="ai-chips">
+        <button class="ai-chip" data-prompt="Génère un scénario de jeu d'action complet avec 8 obstacles équilibrés pour cette vidéo.">🎮 Créer jeu d'action</button>
+        <button class="ai-chip" data-prompt="Trouve les meilleurs moments de saut et place des événements jump_small et jump_long.">⚡ Moments de saut</button>
+        <button class="ai-chip" data-prompt="Configure ce projet en Virtual Run avec 3 paliers de pente et des checkpoints.">🏃 Parcours Virtual Run</button>
+        <button class="ai-chip" data-prompt="Génère une image de couverture épique pour ce projet.">🎨 Image de couverture</button>
+      </div>
+
+      <!-- Input Area -->
+      <form id="ai-chat-form" class="ai-input-area">
+        <input type="text" id="ai-user-input" class="input-field" placeholder="Demandez une action à l'IA..." style="border-radius:20px;" />
+        <button type="submit" id="btn-send-ai" class="btn btn-primary btn-sm" style="border-radius:20px; padding:0 0.8rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Floating Bubble Trigger -->
+    <button id="btn-toggle-ai" class="ai-fab" title="Ouvrir l'Assistant IA">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275 1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
+    </button>
+  </div>
+
+  <!-- ==========================================================================
+       MODALS: ADD VIDEO, SETTINGS, HELP, GENERATED MEDIA
+       ========================================================================== -->
+  
+  <!-- 1. ADD VIDEO MODAL -->
+  <div id="modal-add-video" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-weight:700; font-size:1rem;" data-i18n="addVideoTitle">Ajouter une ou plusieurs vidéos YouTube</h3>
+        <button class="btn btn-sm btn-icon btn-close-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.8rem; color:var(--text-muted);" data-i18n="addVideoDesc">
+          Collez un lien YouTube standard, un lien raccourci youtu.be, un Shorts, ou l'identifiant 11 caractères.
+          Vous pouvez aussi coller plusieurs liens (un par ligne).
+        </p>
+        <textarea id="input-yt-urls" class="textarea-field font-mono" rows="4" placeholder="https://www.youtube.com/watch?v=...&#10;https://youtu.be/..."></textarea>
+        <div id="add-video-error" class="badge badge-game hidden" style="align-self:flex-start; text-transform:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-close-modal" data-i18n="cancel">Annuler</button>
+        <button id="btn-submit-add-video" class="btn btn-primary" data-i18n="import">Importer la vidéo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. SETTINGS MODAL -->
+  <div id="modal-settings" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-weight:700; font-size:1rem;" data-i18n="settingsTitle">Paramètres & Clé API</h3>
+        <button class="btn btn-sm btn-icon btn-close-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <label style="font-size:0.75rem; font-weight:700; color:var(--text-main);" data-i18n="geminiKey">Clé API Google Gemini (REST)</label>
+          <input type="password" id="input-api-key" class="input-field" placeholder="AIzaSy..." />
+          <p style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">
+            Stockée uniquement dans le localStorage de votre navigateur. Envoyée exclusivement aux endpoints Google.
+          </p>
+        </div>
+
+        <div>
+          <label style="font-size:0.75rem; font-weight:700; color:var(--text-main);" data-i18n="modelName">Modèle Gemini par défaut</label>
+          <input type="text" id="input-model-name" class="input-field" value="gemini-2.5-flash" />
+        </div>
+
+        <div>
+          <label style="font-size:0.75rem; font-weight:700; color:var(--text-main);" data-i18n="calibration">Calibration de Latence (ms)</label>
+          <div class="flex items-center gap-3">
+            <input type="range" id="input-calibration-ms" min="-300" max="300" value="0" class="flex-1" />
+            <span id="label-calibration-ms" class="font-mono font-bold" style="font-size:0.85rem; width:50px;">0 ms</span>
+          </div>
+          <button id="btn-test-calibrate" class="btn btn-sm" style="margin-top:6px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span data-i18n="tapCalibrate">Test de calibration au tempo</span>
+          </button>
+        </div>
+
+        <div style="border-top:1px solid var(--border-color); padding-top:0.75rem;">
+          <button id="btn-clear-local-data" class="btn btn-danger btn-sm" data-i18n="clearData">
+            Vider les données locales et réinitialiser
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-close-modal" data-i18n="close">Fermer</button>
+        <button id="btn-save-settings" class="btn btn-primary" data-i18n="save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. HELP & SHORTCUTS MODAL -->
+  <div id="modal-help" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width:640px;">
+      <div class="modal-header">
+        <h3 style="font-weight:700; font-size:1rem;" data-i18n="helpTitle">Guide d'utilisation & Raccourcis</h3>
+        <button class="btn btn-sm btn-icon btn-close-modal">✕</button>
+      </div>
+      <div class="modal-body" style="font-size:0.82rem; line-height:1.5;">
+        <h4 style="color:var(--primary); font-weight:700; margin-bottom:0.25rem;">Les 5 étapes VideoPlay Studio :</h4>
+        <ol style="padding-left:1.25rem; display:flex; flex-direction:column; gap:0.35rem; margin-bottom:1rem;">
+          <li><strong>1. Ajoutez votre vidéo</strong> : Collez n'importe quel lien YouTube public ou non répertorié.</li>
+          <li><strong>2. Montez sans modifier</strong> : Définissez In/Out, scindez et supprimez des segments. Le moteur saute automatiquement les coupes pendant la lecture !</li>
+          <li><strong>3. Créez le script</strong> : Ajoutez des obstacles (Jeu d'action) ou des paliers de vitesse (Virtual Run).</li>
+          <li><strong>4. Testez en direct</strong> : Basculez dans le lecteur immersif avec personnage 2D animé ou cockpit treadmill.</li>
+          <li><strong>5. Exportez</strong> : Récupérez le fichier script .json complet prêt pour la diffusion.</li>
+        </ol>
+
+        <h4 style="color:var(--primary); font-weight:700; margin-bottom:0.25rem;">Raccourcis clavier :</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.4rem; background:#090e1a; padding:0.6rem; border-radius:6px; font-family:'JetBrains Mono'; font-size:0.75rem;">
+          <div><kbd style="background:#1e293b; padding:1px 4px; border-radius:3px;">Espace</kbd> : Lecture / Pause</div>
+          <div><kbd style="background:#1e293b; padding:1px 4px; border-radius:3px;">I / O</kbd> : Point In / Out</div>
+          <div><kbd style="background:#1e293b; padding:1px 4px; border-radius:3px;">S</kbd> : Scinder au curseur</div>
+          <div><kbd style="background:#1e293b; padding:1px 4px; border-radius:3px;">Suppr</kbd> : Supprimer segment</div>
+          <div><kbd style="background:#1e293b; padding:1px 4px; border-radius:3px;">← / →</kbd> : Reculer / Avancer 1s</div>
+          <div><kbd style="background:#1e293b; padding:1px 4px; border-radius:3px;">Shift + ←/→</kbd> : Pas de 0.1s</div>
+          <div><kbd style="background:#1e293b; padding:1px 4px; border-radius:3px;">M</kbd> : Activer / Couper son</div>
+          <div><kbd style="background:#1e293b; padding:1px 4px; border-radius:3px;">1 à 7</kbd> : Poser obstacle direct</div>
+          <div><kbd style="background:#1e293b; padding:1px 4px; border-radius:3px;">+ / -</kbd> : Zoom Timeline</div>
+          <div><kbd style="background:#1e293b; padding:1px 4px; border-radius:3px;">Ctrl+Z / Y</kbd> : Annuler / Rétablir</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-close-modal" data-i18n="understood">Compris !</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       FULLSCREEN PLAY / TEST MODE
+       ========================================================================== -->
+  <div id="play-mode-overlay" class="hidden">
+    <div class="play-video-wrapper">
+      <div id="play-player-embed"></div>
+      <canvas id="play-canvas-overlay"></canvas>
+
+      <!-- Top HUD -->
+      <div class="play-hud">
+        <div class="flex items-center gap-3">
+          <button id="btn-exit-play-mode" class="play-exit-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span data-i18n="exitPlay">Quitter le test</span>
+          </button>
+          <span id="play-mode-title" class="badge badge-game" style="font-size:0.8rem; padding:0.3rem 0.75rem;">MODE JEU</span>
+        </div>
+
+        <!-- Debug toggle -->
+        <button id="btn-toggle-debug" class="btn btn-sm" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.2);">
+          Debug Overlay (D)
+        </button>
+      </div>
+
+      <!-- VIRTUAL RUN HUD (Visible in Virtual Run mode) -->
+      <div id="virtual-run-hud" class="run-hud hidden">
+        <div class="run-stat">
+          <span id="run-hud-speed" class="run-stat-val">10.0</span>
+          <span class="run-stat-lbl">KM/H</span>
+        </div>
+        <div class="run-stat">
+          <span id="run-hud-pace" class="run-stat-val">6:00</span>
+          <span class="run-stat-lbl">ALLURE /KM</span>
+        </div>
+        <div class="run-stat">
+          <span id="run-hud-distance" class="run-stat-val">0.00</span>
+          <span class="run-stat-lbl">DISTANCE KM</span>
+        </div>
+        <div class="run-stat">
+          <span id="run-hud-calories" class="run-stat-val">0</span>
+          <span class="run-stat-lbl">KCAL</span>
+        </div>
+        <div class="run-stat">
+          <span id="run-hud-rate" class="run-stat-val" style="color:#38bdf8;">1.0x</span>
+          <span class="run-stat-lbl">VIDÉO RATE</span>
+        </div>
+
+        <!-- Virtual Run Speed Controls -->
+        <div class="flex items-center gap-2">
+          <button id="btn-run-speed-down" class="btn btn-sm btn-icon" style="background:#1e293b;">-</button>
+          <input type="range" id="run-speed-slider" min="0" max="20" step="0.5" value="10" style="width:110px;" />
+          <button id="btn-run-speed-up" class="btn btn-sm btn-icon" style="background:#1e293b;">+</button>
+        </div>
+      </div>
+
+      <!-- Optional Webcam Motion PIP Box -->
+      <div id="webcam-pip" class="hidden">
+        <video id="webcam-video" autoplay playsinline muted></video>
+        <canvas id="webcam-diff-canvas" width="64" height="48"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Root -->
+  <div id="toast-container"></div>
+
+  <!-- ==========================================================================
+       VANILLA JAVASCRIPT & YOUTUBE PLAYER CONTROLLER
+       ========================================================================== -->
+  <script>
+    /**
+     * @license
+     * VideoPlay Studio - Complete Interactive Video Editor
+     */
+    (function () {
+      'use strict';
+
+      // ========================================================================
+      // 1. DICTIONARY & I18N
+      // ========================================================================
+      const I18N = {
+        fr: {
+          infoTooltip: "Montage non-destructif : votre vidéo YouTube n'est jamais modifiée. Coupes et trim s'appliquent en direct.",
+          playModeBtn: "Tester le Jeu / Run",
+          help: "Aide",
+          myVideos: "Mes Vidéos",
+          addVideo: "Ajouter",
+          searchVideos: "Rechercher...",
+          split: "Scinder",
+          mute: "Audio",
+          previewEdited: "Aperçu",
+          tabScript: "Script & Événements",
+          tabEdl: "Montage & Coupes",
+          tabJson: "JSON Brut",
+          scriptType: "Type de script interactif",
+          gameRules: "Règles & Difficulté",
+          lives: "Vies",
+          maxMisses: "Miss Max",
+          windowMs: "Fenêtre (ms)",
+          timelineEvents: "Événements action",
+          addEvent: "Ajouter",
+          recordHotkeys: "En lecture, pressez 1 à 7 pour placer un obstacle en direct !",
+          time: "Temps",
+          action: "Action",
+          hint: "Indice",
+          runConfig: "Paramètres de la Course",
+          routeName: "Nom du parcours",
+          distanceKm: "Distance (km)",
+          elevationM: "Dénivelé (m)",
+          inputMode: "Mode de contrôle du coureur",
+          checkpoints: "Checkpoints de parcours",
+          trimSettings: "Plage de Trim (Début & Fin)",
+          cutsList: "Coupes Supprimées (Sautées)",
+          keptSegments: "Segments Conservés (EDL)",
+          resetEdits: "Réinitialiser toutes les coupes & trim",
+          jsonPreview: "Format Export VidéoPlay 1.0",
+          importJson: "Importer un script .json",
+          addVideoTitle: "Ajouter une ou plusieurs vidéos YouTube",
+          addVideoDesc: "Collez un lien YouTube standard, un lien raccourci youtu.be, un Shorts, ou l'identifiant 11 caractères.",
+          cancel: "Annuler",
+          import: "Importer la vidéo",
+          settingsTitle: "Paramètres & Clé API",
+          geminiKey: "Clé API Google Gemini (REST)",
+          modelName: "Modèle Gemini par défaut",
+          calibration: "Calibration de Latence (ms)",
+          tapCalibrate: "Test de calibration au tempo",
+          clearData: "Vider les données locales et réinitialiser",
+          close: "Fermer",
+          save: "Enregistrer",
+          helpTitle: "Guide d'utilisation & Raccourcis",
+          understood: "Compris !",
+          exitPlay: "Quitter le test",
+          cutLabel: "Coupe",
+          delete: "Suppr.",
+          restore: "Restaurer",
+          noEvents: "Aucun événement défini pour l'instant.",
+          copySuccess: "JSON copié dans le presse-papier !",
+          savedSuccess: "Paramètres enregistrés avec succès."
+        },
+        en: {
+          infoTooltip: "Non-destructive editing: your YouTube video is never modified. Cuts, trim and mute apply live.",
+          playModeBtn: "Play / Test Mode",
+          help: "Help",
+          myVideos: "My Videos",
+          addVideo: "Add",
+          searchVideos: "Search videos...",
+          split: "Split",
+          mute: "Audio",
+          previewEdited: "Preview",
+          tabScript: "Script & Events",
+          tabEdl: "Edit & Cuts",
+          tabJson: "Raw JSON",
+          scriptType: "Interactive script type",
+          gameRules: "Rules & Difficulty",
+          lives: "Lives",
+          maxMisses: "Max Misses",
+          windowMs: "Window (ms)",
+          timelineEvents: "Action Events",
+          addEvent: "Add",
+          recordHotkeys: "During playback, press 1-7 to drop obstacles live!",
+          time: "Time",
+          action: "Action",
+          hint: "Hint",
+          runConfig: "Virtual Run Settings",
+          routeName: "Route Name",
+          distanceKm: "Distance (km)",
+          elevationM: "Elevation (m)",
+          inputMode: "Runner Control Input",
+          checkpoints: "Route Checkpoints",
+          trimSettings: "Trim Boundaries (In & Out)",
+          cutsList: "Cut / Skipped Segments",
+          keptSegments: "Kept Segments (EDL)",
+          resetEdits: "Reset all edits and cuts",
+          jsonPreview: "VideoPlay 1.0 Export Format",
+          importJson: "Import script .json",
+          addVideoTitle: "Add one or multiple YouTube videos",
+          addVideoDesc: "Paste any standard YouTube link, youtu.be shortlink, Shorts, or raw 11-char ID.",
+          cancel: "Cancel",
+          import: "Import Video",
+          settingsTitle: "Settings & API Key",
+          geminiKey: "Google Gemini API Key (REST)",
+          modelName: "Default Gemini Model",
+          calibration: "Latency Calibration (ms)",
+          tapCalibrate: "Tap-to-calibrate rhythm test",
+          clearData: "Clear local data & reset",
+          close: "Close",
+          save: "Save",
+          helpTitle: "User Guide & Shortcuts",
+          understood: "Got it!",
+          exitPlay: "Exit Test",
+          cutLabel: "Cut",
+          delete: "Delete",
+          restore: "Restore",
+          noEvents: "No events added yet.",
+          copySuccess: "JSON copied to clipboard!",
+          savedSuccess: "Settings saved successfully."
+        }
+      };
+
+      let currentLang = 'fr';
+
+      function setLanguage(lang) {
+        currentLang = lang;
+        document.getElementById('lang-label').textContent = lang.toUpperCase();
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if (I18N[lang] && I18N[lang][key]) {
+            el.textContent = I18N[lang][key];
+          }
+        });
+        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+          const key = el.getAttribute('data-i18n-ph');
+          if (I18N[lang] && I18N[lang][key]) {
+            el.placeholder = I18N[lang][key];
+          }
+        });
+        localStorage.setItem('videoplay_lang', lang);
+      }
+
+      // ========================================================================
+      // 2. PROJECT STATE & STORAGE
+      // ========================================================================
+      const DEFAULT_PROJECTS = [
+        {
+          id: 'proj_game_demo',
+          name: 'Parkour Action Run (Demo)',
+          youtubeId: 'ScMzIvxBSi4', // Public Blender Open Movie
+          title: 'Big Buck Bunny 60fps Parkour Demo',
+          author: 'Blender Foundation',
+          duration: 60.0,
+          trimStart: 2.0,
+          trimEnd: 48.0,
+          cuts: [
+            { id: 'cut_1', start: 15.0, end: 18.5 }
+          ],
+          audio: { muted: false },
+          playbackRate: 1.0,
+          script: {
+            schemaVersion: "1.0",
+            type: "game",
+            video: {
+              source: "youtube",
+              videoId: "ScMzIvxBSi4",
+              url: "https://www.youtube.com/watch?v=ScMzIvxBSi4",
+              title: "Big Buck Bunny 60fps Parkour Demo",
+              durationSeconds: 60.0,
+              trimStart: 2.0,
+              trimEnd: 48.0,
+              cuts: [{ start: 15.0, end: 18.5 }]
+            },
+            rules: {
+              maxMisses: 5,
+              maxLives: 3,
+              timingWindowMs: { perfect: 120, good: 280 },
+              scoring: { perfect: 100, good: 50, comboMultiplierStep: 5, maxMultiplier: 4, failPenalty: 0 },
+              winCondition: "reach_end",
+              minScoreToWin: 600,
+              loseCondition: "misses>=maxMisses",
+              allowRetryFromCheckpoint: true
+            },
+            actions: ["jump_small", "jump_long", "move_left", "move_right", "slide_down", "punch", "slap"],
+            timeline: [
+              { id: "evt_1", time: 5.0, action: "jump_small", duration: 0.6, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Petit saut !", visualCue: "arrow_up", required: true },
+              { id: "evt_2", time: 9.2, action: "slide_down", duration: 0.7, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Glissade !", visualCue: "arrow_down", required: true },
+              { id: "evt_3", time: 13.0, action: "move_left", duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Esquive gauche", visualCue: "arrow_left", required: true },
+              { id: "evt_4", time: 22.4, action: "punch", duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Coup de poing !", visualCue: "punch", required: true },
+              { id: "evt_5", time: 27.0, action: "jump_long", duration: 0.8, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Grand Saut !", visualCue: "arrow_up_double", required: true },
+              { id: "evt_6", time: 33.5, action: "move_right", duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Esquive droite", visualCue: "arrow_right", required: true },
+              { id: "evt_7", time: 39.0, action: "slap", duration: 0.5, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Gifle tournante !", visualCue: "slap", required: true },
+              { id: "evt_8", time: 44.0, action: "jump_small", duration: 0.6, window: { before: 0.3, after: 0.3 }, points: 100, hint: "Saut final !", visualCue: "arrow_up", required: true }
+            ],
+            checkpoints: [
+              { time: 20.0, label: "Checkpoint 1" },
+              { time: 35.0, label: "Checkpoint 2" }
+            ]
+          }
+        },
+        {
+          id: 'proj_run_demo',
+          name: 'Alpine Trail Run (Demo)',
+          youtubeId: 'bNpxj8gQnfc', // Mountain Trail
+          title: 'Trail des Alpes & Vallée 4K',
+          author: 'Outdoor Cinema',
+          duration: 180.0,
+          trimStart: 0.0,
+          trimEnd: 120.0,
+          cuts: [],
+          audio: { muted: false },
+          playbackRate: 1.0,
+          script: {
+            schemaVersion: "1.0",
+            type: "virtual_run",
+            video: {
+              source: "youtube",
+              videoId: "bNpxj8gQnfc",
+              url: "https://www.youtube.com/watch?v=bNpxj8gQnfc",
+              durationSeconds: 180.0,
+              trimStart: 0.0,
+              trimEnd: 120.0,
+              cuts: []
+            },
+            virtualRun: {
+              route: {
+                name: "Sentier Alpin & Cascade",
+                location: "Chamonix",
+                totalDistanceKm: 3.5,
+                elevationGainM: 140,
+                terrain: "trail"
+              },
+              defaultPaceMinPerKm: 5.5,
+              speedMapping: {
+                minSpeedKmh: 4,
+                maxSpeedKmh: 16,
+                videoPlaybackRateMin: 0.5,
+                videoPlaybackRateMax: 2.0
+              },
+              segments: [
+                { start: 0, end: 30, distanceKm: 0.8, slopePercent: 1, recommendedSpeedKmh: 9, label: "Échauffement plat" },
+                { start: 30, end: 75, distanceKm: 1.5, slopePercent: 6, recommendedSpeedKmh: 11, label: "Montée vers la crête" },
+                { start: 75, end: 120, distanceKm: 1.2, slopePercent: -2, recommendedSpeedKmh: 13, label: "Descente vers le lac" }
+              ],
+              checkpoints: [
+                { time: 30, label: "Km 1", distanceKm: 1.0, message: "Super départ !" },
+                { time: 75, label: "Sommet Crête", distanceKm: 2.3, message: "Vue panoramique !" }
+              ],
+              input: { mode: "manual-slider", cadenceSource: "keyboard" }
+            }
+          }
+        }
+      ];
+
+      let projects = [];
+      let currentProject = null;
+      let undoStack = [];
+      let redoStack = [];
+
+      function loadStoredProjects() {
+        try {
+          const raw = localStorage.getItem('videoplay_projects');
+          if (raw) {
+            projects = JSON.parse(raw);
+          }
+        } catch (e) {
+          console.error("Failed to load projects from localStorage", e);
+        }
+        if (!projects || projects.length === 0) {
+          projects = JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
+          saveProjects();
+        }
+        const activeId = localStorage.getItem('videoplay_current_id');
+        currentProject = projects.find(p => p.id === activeId) || projects[0];
+      }
+
+      function saveProjects() {
+        try {
+          localStorage.setItem('videoplay_projects', JSON.stringify(projects));
+          if (currentProject) {
+            localStorage.setItem('videoplay_current_id', currentProject.id);
+          }
+        } catch (e) {
+          console.warn("Storage save failed", e);
+        }
+      }
+
+      function pushUndoState() {
+        if (!currentProject) return;
+        undoStack.push(JSON.stringify(currentProject));
+        if (undoStack.length > 50) undoStack.shift();
+        redoStack = [];
+        updateUndoRedoButtons();
+      }
+
+      function undo() {
+        if (undoStack.length === 0) return;
+        redoStack.push(JSON.stringify(currentProject));
+        const prev = JSON.parse(undoStack.pop());
+        Object.assign(currentProject, prev);
+        saveProjects();
+        syncUI();
+        updateUndoRedoButtons();
+        showToast("Annulation effectuée");
+      }
+
+      function redo() {
+        if (redoStack.length === 0) return;
+        undoStack.push(JSON.stringify(currentProject));
+        const next = JSON.parse(redoStack.pop());
+        Object.assign(currentProject, next);
+        saveProjects();
+        syncUI();
+        updateUndoRedoButtons();
+        showToast("Rétablissement effectué");
+      }
+
+      function updateUndoRedoButtons() {
+        document.getElementById('btn-undo').disabled = (undoStack.length === 0);
+        document.getElementById('btn-redo').disabled = (redoStack.length === 0);
+      }
+
+      // ========================================================================
+      // 3. TIME CONVERSION & EDL LOGIC
+      // ========================================================================
+      function getKeptSegments(project) {
+        if (!project) return [];
+        const tStart = project.trimStart || 0;
+        const tEnd = project.trimEnd || project.duration || 100;
+        const sortedCuts = (project.cuts || [])
+          .filter(c => c.end > tStart && c.start < tEnd)
+          .map(c => ({
+            start: Math.max(tStart, c.start),
+            end: Math.min(tEnd, c.end)
+          }))
+          .sort((a, b) => a.start - b.start);
+
+        const kept = [];
+        let cursor = tStart;
+
+        for (const cut of sortedCuts) {
+          if (cut.start > cursor) {
+            kept.push({ start: cursor, end: cut.start, duration: cut.start - cursor });
+          }
+          cursor = Math.max(cursor, cut.end);
+        }
+
+        if (cursor < tEnd) {
+          kept.push({ start: cursor, end: tEnd, duration: tEnd - cursor });
+        }
+        return kept;
+      }
+
+      function getEffectiveDuration(project) {
+        const kept = getKeptSegments(project);
+        return kept.reduce((acc, seg) => acc + seg.duration, 0);
+      }
+
+      function originalToEditedTime(origTime, project) {
+        if (!project) return origTime;
+        const tStart = project.trimStart || 0;
+        if (origTime <= tStart) return 0;
+        let edited = 0;
+        const kept = getKeptSegments(project);
+        for (const seg of kept) {
+          if (origTime >= seg.end) {
+            edited += seg.duration;
+          } else if (origTime >= seg.start) {
+            edited += (origTime - seg.start);
+            return edited;
+          } else {
+            return edited;
+          }
+        }
+        return edited;
+      }
+
+      function editedToOriginalTime(editedTime, project) {
+        if (!project) return editedTime;
+        const kept = getKeptSegments(project);
+        let accumulated = 0;
+        for (const seg of kept) {
+          if (accumulated + seg.duration >= editedTime) {
+            const remainder = editedTime - accumulated;
+            return seg.start + remainder;
+          }
+          accumulated += seg.duration;
+        }
+        return project.trimEnd || project.duration || editedTime;
+      }
+
+      function formatTime(seconds) {
+        if (isNaN(seconds) || seconds < 0) seconds = 0;
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        const tenths = Math.floor((seconds % 1) * 10);
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${tenths}`;
+      }
+
+      // ========================================================================
+      // 4. YOUTUBE IFRAME PLAYER API INTEGRATION
+      // ========================================================================
+      let ytPlayer = null;
+      let isPlayerReady = false;
+      let playheadTime = 0;
+      let isPlaying = false;
+      let livePollInterval = null;
+      let lastSeekTime = 0;
+
+      // Extract YouTube Video ID from any valid format
+      function parseYouTubeID(urlOrId) {
+        if (!urlOrId) return null;
+        urlOrId = urlOrId.trim();
+        if (/^[a-zA-Z0-9_-]{11}$/.test(urlOrId)) {
+          return urlOrId;
+        }
+        const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/;
+        const match = urlOrId.match(regex);
+        return match ? match[1] : null;
+      }
+
+      function loadYouTubeAPI() {
+        if (window.YT && window.YT.Player) {
+          initPlayer();
+          return;
+        }
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        window.onYouTubeIframeAPIReady = function () {
+          initPlayer();
+        };
+      }
+
+      function initPlayer() {
+        if (!currentProject) return;
+        const container = document.getElementById('player-container');
+        container.innerHTML = '<div id="player-embed"></div>';
+
+        const origin = window.location.origin && window.location.origin !== "null"
+          ? window.location.origin
+          : "https://www.youtube.com";
+
+        ytPlayer = new window.YT.Player('player-embed', {
+          videoId: currentProject.youtubeId,
+          playerVars: {
+            enablejsapi: 1,
+            playsinline: 1,
+            rel: 0,
+            modestbranding: 1,
+            controls: 1,
+            origin: origin
+          },
+          events: {
+            onReady: onPlayerReady,
+            onStateChange: onPlayerStateChange,
+            onError: onPlayerError
+          }
+        });
+      }
+
+      function onPlayerReady(event) {
+        isPlayerReady = true;
+        document.getElementById('player-error').classList.add('hidden');
+        const duration = ytPlayer.getDuration();
+        if (duration && duration > 0) {
+          currentProject.duration = duration;
+          if (!currentProject.trimEnd || currentProject.trimEnd > duration) {
+            currentProject.trimEnd = duration;
+          }
+        }
+
+        // Apply audio mute
+        if (currentProject.audio && currentProject.audio.muted) {
+          ytPlayer.mute();
+        } else {
+          ytPlayer.unMute();
+        }
+
+        // Seek to trimStart
+        playheadTime = currentProject.trimStart || 0;
+        ytPlayer.seekTo(playheadTime, true);
+        startLiveWatcher();
+        syncUI();
+      }
+
+      function onPlayerStateChange(event) {
+        if (event.data === window.YT.PlayerState.PLAYING) {
+          isPlaying = true;
+          document.getElementById('btn-play-pause').innerHTML = `
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+          `;
+        } else {
+          isPlaying = false;
+          document.getElementById('btn-play-pause').innerHTML = `
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          `;
+        }
+      }
+
+      function onPlayerError(event) {
+        const errorOverlay = document.getElementById('player-error');
+        const descEl = document.getElementById('player-error-desc');
+        errorOverlay.classList.remove('hidden');
+
+        // Handling YouTube error codes 2, 5, 100, 101, 150
+        switch (event.data) {
+          case 2:
+            descEl.textContent = "L'identifiant de la vidéo est invalide (Erreur 2).";
+            break;
+          case 5:
+            descEl.textContent = "Erreur de lecture HTML5 sur cette vidéo (Erreur 5).";
+            break;
+          case 100:
+            descEl.textContent = "Vidéo introuvable ou marquée comme privée par son auteur (Erreur 100).";
+            break;
+          case 101:
+          case 150:
+            descEl.textContent = "Le créateur de cette vidéo n'autorise pas l'intégration sur d'autres sites web (Erreur 150). Connectez-vous à YouTube Studio, passez la vidéo en 'Non répertoriée' ou 'Publique' et cochez 'Autoriser l'intégration'.";
+            break;
+          default:
+            descEl.textContent = "Une erreur est survenue lors du chargement de la vidéo YouTube.";
+        }
+      }
+
+      // Non-Destructive Live Playback Engine
+      function startLiveWatcher() {
+        if (livePollInterval) clearInterval(livePollInterval);
+
+        livePollInterval = setInterval(() => {
+          if (!isPlayerReady || !ytPlayer || !currentProject) return;
+
+          try {
+            const curTime = ytPlayer.getCurrentTime();
+            if (curTime !== undefined) {
+              playheadTime = curTime;
+            }
+          } catch (e) {
+            return;
+          }
+
+          // 1. Boundary checking: Trim Start / Trim End
+          const tStart = currentProject.trimStart || 0;
+          const tEnd = currentProject.trimEnd || currentProject.duration || 1000;
+
+          if (isPlaying) {
+            if (playheadTime < tStart) {
+              ytPlayer.seekTo(tStart, true);
+              playheadTime = tStart;
+            } else if (playheadTime >= tEnd) {
+              ytPlayer.pauseVideo();
+              ytPlayer.seekTo(tStart, true);
+              playheadTime = tStart;
+              isPlaying = false;
+            }
+
+            // 2. Cut Skipping Engine (non-destructive cut segments)
+            const cuts = currentProject.cuts || [];
+            const now = Date.now();
+            for (const cut of cuts) {
+              if (playheadTime >= cut.start && playheadTime < cut.end) {
+                // Avoid seek stutter loop with debounce
+                if (now - lastSeekTime > 300) {
+                  lastSeekTime = now;
+                  ytPlayer.seekTo(cut.end + 0.05, true);
+                  playheadTime = cut.end + 0.05;
+                }
+                break;
+              }
+            }
+          }
+
+          // Update Time Counters
+          updateTimeDisplays();
+          drawTimeline();
+        }, 35);
+      }
+
+      function updateTimeDisplays() {
+        const origEl = document.getElementById('time-display-orig');
+        const editedEl = document.getElementById('time-display-edited');
+        const durEl = document.getElementById('time-display-duration');
+
+        if (!currentProject) return;
+        const editedTime = originalToEditedTime(playheadTime, currentProject);
+        const effectiveDur = getEffectiveDuration(currentProject);
+
+        origEl.textContent = formatTime(playheadTime);
+        editedEl.textContent = formatTime(editedTime);
+        durEl.textContent = `(${formatTime(effectiveDur)})`;
+      }
+
+      // ========================================================================
+      // 5. TIMELINE CANVAS ENGINE (60 FPS, ZOOM, DRAGGABLE HANDLES & PINS)
+      // ========================================================================
+      const canvas = document.getElementById('timeline-canvas');
+      const ctx = canvas.getContext('2d');
+      const container = document.getElementById('timeline-container');
+
+      let zoomLevel = 15; // Pixels per second
+      let isDraggingPlayhead = false;
+      let isDraggingTrimIn = false;
+      let isDraggingTrimOut = false;
+      let draggingEventId = null;
+      let snappingEnabled = true;
+
+      function resizeCanvas() {
+        if (!currentProject) return;
+        const totalDuration = currentProject.duration || 60;
+        const requiredWidth = Math.max(container.clientWidth, totalDuration * zoomLevel + 100);
+        canvas.width = requiredWidth * window.devicePixelRatio;
+        canvas.height = container.clientHeight * window.devicePixelRatio;
+        canvas.style.width = requiredWidth + 'px';
+        canvas.style.height = container.clientHeight + 'px';
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        drawTimeline();
+      }
+
+      const ACTION_COLORS = {
+        jump_small: '#06b6d4',
+        jump_long: '#6366f1',
+        move_left: '#f97316',
+        move_right: '#f59e0b',
+        slide_down: '#10b981',
+        punch: '#ef4444',
+        slap: '#a855f7'
+      };
+
+      function drawTimeline() {
+        if (!ctx || !currentProject) return;
+        const width = canvas.width / window.devicePixelRatio;
+        const height = canvas.height / window.devicePixelRatio;
+
+        ctx.clearRect(0, 0, width, height);
+
+        const duration = currentProject.duration || 60;
+        const rulerHeight = 26;
+        const trackY = rulerHeight + 10;
+        const trackHeight = height - rulerHeight - 30;
+
+        // 1. Draw Time Ruler
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, width, rulerHeight);
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, rulerHeight);
+        ctx.lineTo(width, rulerHeight);
+        ctx.stroke();
+
+        // Ruler ticks
+        let step = 1;
+        if (zoomLevel < 10) step = 10;
+        else if (zoomLevel < 25) step = 5;
+        else if (zoomLevel < 60) step = 2;
+        else step = 1;
+
+        ctx.font = '10px JetBrains Mono';
+        ctx.fillStyle = '#94a3b8';
+
+        for (let t = 0; t <= duration; t += step) {
+          const x = t * zoomLevel;
+          ctx.beginPath();
+          ctx.moveTo(x, rulerHeight - 8);
+          ctx.lineTo(x, rulerHeight);
+          ctx.stroke();
+          ctx.fillText(formatTime(t).substring(0, 5), x + 2, rulerHeight - 10);
+        }
+
+        // 2. Base track background
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, trackY, duration * zoomLevel, trackHeight);
+
+        // 3. Trim out-of-bounds darkened areas
+        const trimInX = (currentProject.trimStart || 0) * zoomLevel;
+        const trimOutX = (currentProject.trimEnd || duration) * zoomLevel;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+        ctx.fillRect(0, trackY, trimInX, trackHeight);
+        ctx.fillRect(trimOutX, trackY, duration * zoomLevel - trimOutX, trackHeight);
+
+        // 4. Kept Segments (Active Video Content)
+        const kept = getKeptSegments(currentProject);
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.25)';
+        for (const seg of kept) {
+          const sx = seg.start * zoomLevel;
+          const sw = seg.duration * zoomLevel;
+          ctx.fillRect(sx, trackY, sw, trackHeight);
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(sx, trackY, sw, trackHeight);
+        }
+
+        // 5. Cut Segments (Hatched Red)
+        const cuts = currentProject.cuts || [];
+        for (const cut of cuts) {
+          const cx = cut.start * zoomLevel;
+          const cw = (cut.end - cut.start) * zoomLevel;
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.25)';
+          ctx.fillRect(cx, trackY, cw, trackHeight);
+
+          // Hatching lines
+          ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+          ctx.lineWidth = 1.5;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(cx, trackY, cw, trackHeight);
+          ctx.clip();
+          for (let hx = cx - trackHeight; hx < cx + cw + trackHeight; hx += 8) {
+            ctx.moveTo(hx, trackY + trackHeight);
+            ctx.lineTo(hx + trackHeight, trackY);
+          }
+          ctx.stroke();
+          ctx.restore();
+
+          // Cut label
+          ctx.fillStyle = '#fca5a5';
+          ctx.font = 'bold 9px Inter';
+          ctx.fillText("COUPE", cx + 4, trackY + 14);
+        }
+
+        // 6. Event Pins (Game Obstacles or Virtual Run Checkpoints)
+        const events = currentProject.script?.timeline || [];
+        for (const evt of events) {
+          const ex = evt.time * zoomLevel;
+          const color = ACTION_COLORS[evt.action] || '#ec4899';
+
+          // Vertical indicator
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(ex, trackY);
+          ctx.lineTo(ex, trackY + trackHeight);
+          ctx.stroke();
+
+          // Top pin head
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(ex, trackY + 8, 7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Action initial
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 8px Inter';
+          ctx.textAlign = 'center';
+          ctx.fillText(evt.action.substring(0, 1).toUpperCase(), ex, trackY + 11);
+          ctx.textAlign = 'start';
+        }
+
+        // 7. Trim In & Trim Out Handles
+        // Trim In Handle
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(trimInX - 4, trackY, 8, trackHeight);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(trimInX - 2, trackY + trackHeight / 2 - 10, 4, 20);
+
+        // Trim Out Handle
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(trimOutX - 4, trackY, 8, trackHeight);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(trimOutX - 2, trackY + trackHeight / 2 - 10, 4, 20);
+
+        // 8. Playhead Cursor (Red Line)
+        const px = playheadTime * zoomLevel;
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(px, 0);
+        ctx.lineTo(px, height);
+        ctx.stroke();
+
+        // Cursor head
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(px - 7, 0);
+        ctx.lineTo(px + 7, 0);
+        ctx.lineTo(px, 12);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Snapping helper
+      function applySnapping(time) {
+        if (!snappingEnabled || !currentProject) return time;
+        const snapThresholdTime = 12 / zoomLevel; // 12 pixels window
+
+        const targets = [
+          currentProject.trimStart || 0,
+          currentProject.trimEnd || currentProject.duration || 60
+        ];
+
+        (currentProject.cuts || []).forEach(c => {
+          targets.push(c.start);
+          targets.push(c.end);
+        });
+
+        (currentProject.script?.timeline || []).forEach(e => {
+          targets.push(e.time);
+        });
+
+        for (const t of targets) {
+          if (Math.abs(time - t) <= snapThresholdTime) {
+            return t;
+          }
+        }
+        return time;
+      }
+
+      // Timeline Mouse & Touch Events
+      container.addEventListener('mousedown', (e) => {
+        if (!currentProject) return;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const rawTime = mouseX / zoomLevel;
+        const time = applySnapping(rawTime);
+
+        const trimInX = (currentProject.trimStart || 0) * zoomLevel;
+        const trimOutX = (currentProject.trimEnd || currentProject.duration || 60) * zoomLevel;
+
+        // Check if clicked Trim In handle
+        if (Math.abs(mouseX - trimInX) < 8) {
+          isDraggingTrimIn = true;
+          pushUndoState();
+          return;
+        }
+
+        // Check if clicked Trim Out handle
+        if (Math.abs(mouseX - trimOutX) < 8) {
+          isDraggingTrimOut = true;
+          pushUndoState();
+          return;
+        }
+
+        // Check if clicked an event pin
+        const events = currentProject.script?.timeline || [];
+        for (const evt of events) {
+          const ex = evt.time * zoomLevel;
+          if (Math.abs(mouseX - ex) < 9) {
+            draggingEventId = evt.id;
+            pushUndoState();
+            return;
+          }
+        }
+
+        // Otherwise scrub playhead
+        isDraggingPlayhead = true;
+        seekToTime(time);
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!currentProject) return;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const rawTime = Math.max(0, Math.min(currentProject.duration || 300, mouseX / zoomLevel));
+        const time = applySnapping(rawTime);
+
+        if (isDraggingPlayhead) {
+          seekToTime(time);
+        } else if (isDraggingTrimIn) {
+          if (time < (currentProject.trimEnd - 1)) {
+            currentProject.trimStart = Number(time.toFixed(1));
+            document.getElementById('trim-in-input').value = currentProject.trimStart;
+            drawTimeline();
+          }
+        } else if (isDraggingTrimOut) {
+          if (time > (currentProject.trimStart + 1)) {
+            currentProject.trimEnd = Number(time.toFixed(1));
+            document.getElementById('trim-out-input').value = currentProject.trimEnd;
+            drawTimeline();
+          }
+        } else if (draggingEventId) {
+          const evt = (currentProject.script?.timeline || []).find(e => e.id === draggingEventId);
+          if (evt) {
+            evt.time = Number(time.toFixed(2));
+            drawTimeline();
+            renderEventsTable();
+          }
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isDraggingTrimIn || isDraggingTrimOut || draggingEventId) {
+          saveProjects();
+          syncUI();
+        }
+        isDraggingPlayhead = false;
+        isDraggingTrimIn = false;
+        isDraggingTrimOut = false;
+        draggingEventId = null;
+      });
+
+      // Timeline Zoom with Wheel
+      container.addEventListener('wheel', (e) => {
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+          e.preventDefault();
+          if (e.deltaY < 0) {
+            setZoom(zoomLevel * 1.25);
+          } else {
+            setZoom(zoomLevel / 1.25);
+          }
+        }
+      });
+
+      function setZoom(newZoom) {
+        zoomLevel = Math.max(5, Math.min(250, newZoom));
+        resizeCanvas();
+      }
+
+      function seekToTime(seconds) {
+        if (!currentProject) return;
+        playheadTime = Math.max(0, Math.min(currentProject.duration || 60, seconds));
+        if (isPlayerReady && ytPlayer) {
+          ytPlayer.seekTo(playheadTime, true);
+        }
+        updateTimeDisplays();
+        drawTimeline();
+      }
+
+      // ========================================================================
+      // 6. EDITING TOOLS (SPLIT, CUT, MUTE, TRIM, RESETS)
+      // ========================================================================
+      function splitAtPlayhead() {
+        if (!currentProject) return;
+        pushUndoState();
+
+        const time = Number(playheadTime.toFixed(1));
+        // Add a default 2-second cut at the playhead
+        const cutEnd = Math.min(currentProject.duration, time + 2.0);
+        const newCut = {
+          id: 'cut_' + Date.now(),
+          start: time,
+          end: cutEnd
+        };
+        currentProject.cuts = currentProject.cuts || [];
+        currentProject.cuts.push(newCut);
+        currentProject.cuts.sort((a, b) => a.start - b.start);
+
+        saveProjects();
+        syncUI();
+        showToast("Coupe créée de " + formatTime(time) + " à " + formatTime(cutEnd));
+      }
+
+      function deleteCut(cutId) {
+        if (!currentProject || !currentProject.cuts) return;
+        pushUndoState();
+        currentProject.cuts = currentProject.cuts.filter(c => c.id !== cutId);
+        saveProjects();
+        syncUI();
+        showToast("Coupe restaurée");
+      }
+
+      function toggleMute() {
+        if (!currentProject) return;
+        pushUndoState();
+        currentProject.audio = currentProject.audio || { muted: false };
+        currentProject.audio.muted = !currentProject.audio.muted;
+
+        if (isPlayerReady && ytPlayer) {
+          if (currentProject.audio.muted) {
+            ytPlayer.mute();
+          } else {
+            ytPlayer.unMute();
+          }
+        }
+
+        saveProjects();
+        syncUI();
+        showToast(currentProject.audio.muted ? "Audio coupé (Mute)" : "Audio activé");
+      }
+
+      function resetEdits() {
+        if (!confirm("Voulez-vous réinitialiser toutes les coupes et limites de trim ?")) return;
+        pushUndoState();
+        currentProject.trimStart = 0;
+        currentProject.trimEnd = currentProject.duration || 60;
+        currentProject.cuts = [];
+        currentProject.audio = { muted: false };
+        if (isPlayerReady && ytPlayer) ytPlayer.unMute();
+
+        saveProjects();
+        syncUI();
+        showToast("Montage réinitialisé");
+      }
+
+      // ========================================================================
+      // 7. SCRIPT BUILDER & VALIDATION
+      // ========================================================================
+      function setScriptMode(type) {
+        if (!currentProject) return;
+        pushUndoState();
+        currentProject.script = currentProject.script || {};
+        currentProject.script.type = type;
+
+        if (type === 'game' && !currentProject.script.timeline) {
+          currentProject.script.timeline = [];
+          currentProject.script.rules = {
+            maxMisses: 5,
+            maxLives: 3,
+            timingWindowMs: { perfect: 120, good: 280 },
+            scoring: { perfect: 100, good: 50, comboMultiplierStep: 5, maxMultiplier: 4, failPenalty: 0 },
+            winCondition: "reach_end",
+            minScoreToWin: 500,
+            loseCondition: "misses>=maxMisses"
+          };
+        } else if (type === 'virtual_run' && !currentProject.script.virtualRun) {
+          currentProject.script.virtualRun = {
+            route: { name: currentProject.name, location: "Nature", totalDistanceKm: 5, elevationGainM: 100, terrain: "road" },
+            defaultPaceMinPerKm: 6.0,
+            speedMapping: { minSpeedKmh: 4, maxSpeedKmh: 16, videoPlaybackRateMin: 0.5, videoPlaybackRateMax: 2.0 },
+            segments: [{ start: 0, end: currentProject.duration || 120, distanceKm: 5, slopePercent: 1, recommendedSpeedKmh: 10, label: "Allure régulière" }],
+            checkpoints: [],
+            input: { mode: "manual-slider" }
+          };
+        }
+
+        saveProjects();
+        syncUI();
+      }
+
+      function addEventAtPlayhead(action = "jump_small") {
+        if (!currentProject) return;
+        pushUndoState();
+        currentProject.script = currentProject.script || { type: 'game' };
+        currentProject.script.timeline = currentProject.script.timeline || [];
+
+        const time = Number(playheadTime.toFixed(2));
+        const newEvt = {
+          id: 'evt_' + Date.now(),
+          time: time,
+          action: action,
+          duration: 0.6,
+          window: { before: 0.25, after: 0.25 },
+          points: 100,
+          hint: action === 'jump_small' ? 'Petit saut' : action,
+          visualCue: action,
+          required: true
+        };
+
+        currentProject.script.timeline.push(newEvt);
+        currentProject.script.timeline.sort((a, b) => a.time - b.time);
+
+        saveProjects();
+        syncUI();
+        showToast(`Obstacle ${action} ajouté à ${time}s`);
+      }
+
+      function validateScript(project) {
+        const warnings = [];
+        if (!project || !project.script) return warnings;
+
+        const tStart = project.trimStart || 0;
+        const tEnd = project.trimEnd || project.duration || 1000;
+        const cuts = project.cuts || [];
+
+        if (project.script.type === 'game') {
+          const events = project.script.timeline || [];
+
+          events.forEach(evt => {
+            if (evt.time < tStart || evt.time > tEnd) {
+              warnings.push(`Événement ${evt.action} à ${evt.time}s est en dehors de la plage In/Out (${tStart}s - ${tEnd}s).`);
+            }
+            cuts.forEach(cut => {
+              if (evt.time >= cut.start && evt.time <= cut.end) {
+                warnings.push(`Événement ${evt.action} à ${evt.time}s est situé dans une coupe supprimée (${cut.start}s - ${cut.end}s).`);
+              }
+            });
+          });
+        }
+        return warnings;
+      }
+
+      // ========================================================================
+      // 8. PLAY / TEST MODE (GAME & VIRTUAL RUN WITH 2D CANVAS CHARACTER)
+      // ========================================================================
+      const playOverlay = document.getElementById('play-mode-overlay');
+      const playCanvas = document.getElementById('play-canvas-overlay');
+      const playCtx = playCanvas.getContext('2d');
+      let playAnimFrame = null;
+      let isPlayModeActive = false;
+
+      // Game engine state
+      let gameState = {
+        score: 0,
+        combo: 0,
+        multiplier: 1,
+        lives: 3,
+        misses: 0,
+        streak: 0,
+        evaluatedEvents: new Set(),
+        characterState: 'running', // running, jump_small, jump_long, slide_down, move_left, move_right, punch, slap
+        charStateTime: 0,
+        lastFeedbackText: '',
+        lastFeedbackColor: '#10b981',
+        feedbackTimer: 0,
+        calibrationOffsetMs: 0,
+        debugOverlay: false
+      };
+
+      // Virtual run state
+      let runState = {
+        speedKmh: 9.0,
+        distanceTraveledKm: 0,
+        elapsedSec: 0,
+        calories: 0,
+        currentSlope: 0,
+        inputMode: 'manual-slider',
+        lastTapTime: 0
+      };
+
+      function openPlayMode() {
+        if (!currentProject) return;
+        isPlayModeActive = true;
+        playOverlay.classList.remove('hidden');
+
+        // Setup Canvas size
+        playCanvas.width = window.innerWidth * window.devicePixelRatio;
+        playCanvas.height = window.innerHeight * window.devicePixelRatio;
+        playCanvas.style.width = window.innerWidth + 'px';
+        playCanvas.style.height = window.innerHeight + 'px';
+        playCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+        // Move YouTube embed into full-screen view
+        const embedContainer = document.getElementById('play-player-embed');
+        const normalContainer = document.getElementById('player-container');
+        embedContainer.appendChild(document.getElementById('player-embed'));
+
+        // Reset game state
+        gameState.score = 0;
+        gameState.combo = 0;
+        gameState.multiplier = 1;
+        gameState.lives = currentProject.script?.rules?.maxLives || 3;
+        gameState.misses = 0;
+        gameState.evaluatedEvents.clear();
+        gameState.characterState = 'running';
+
+        // Check if Game or Virtual Run
+        const isRun = currentProject.script?.type === 'virtual_run';
+        const titleBadge = document.getElementById('play-mode-title');
+        const runHud = document.getElementById('virtual-run-hud');
+
+        if (isRun) {
+          titleBadge.textContent = "VIRTUAL RUN";
+          titleBadge.className = "badge badge-run";
+          runHud.classList.remove('hidden');
+          runState.distanceTraveledKm = 0;
+          runState.elapsedSec = 0;
+          runState.speedKmh = 9.0;
+          setupWebcamIfNeeded();
+        } else {
+          titleBadge.textContent = "JEU D'ACTION";
+          titleBadge.className = "badge badge-game";
+          runHud.classList.add('hidden');
+          document.getElementById('webcam-pip').classList.add('hidden');
+        }
+
+        // Start playback from trimStart
+        if (isPlayerReady && ytPlayer) {
+          ytPlayer.seekTo(currentProject.trimStart || 0, true);
+          ytPlayer.playVideo();
+        }
+
+        runPlayLoop();
+      }
+
+      function exitPlayMode() {
+        isPlayModeActive = false;
+        playOverlay.classList.add('hidden');
+        if (playAnimFrame) cancelAnimationFrame(playAnimFrame);
+
+        // Put player back to main deck
+        const normalContainer = document.getElementById('player-container');
+        normalContainer.appendChild(document.getElementById('player-embed'));
+
+        if (isPlayerReady && ytPlayer) {
+          ytPlayer.pauseVideo();
+        }
+
+        stopWebcam();
+        drawTimeline();
+      }
+
+      // 2D Canvas Character Animator
+      function drawAnimatedCharacter(ctx, x, y, state, stateTime) {
+        ctx.save();
+        ctx.translate(x, y);
+
+        const legOsc = Math.sin(stateTime * 14) * 16;
+        const armOsc = Math.cos(stateTime * 14) * 16;
+
+        switch (state) {
+          case 'jump_small':
+            // Jumping up
+            ctx.translate(0, -50 + Math.sin(stateTime * 10) * 15);
+            ctx.fillStyle = '#06b6d4';
+            break;
+          case 'jump_long':
+            // High leap
+            ctx.translate(0, -90 + Math.sin(stateTime * 8) * 20);
+            ctx.fillStyle = '#6366f1';
+            // Speed trail
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.4)';
+            ctx.fillRect(-20, 20, 40, 10);
+            break;
+          case 'slide_down':
+            // Crouching low slide
+            ctx.translate(0, 30);
+            ctx.fillStyle = '#10b981';
+            // Dust particles
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.arc(-30 + Math.random() * 10, 20, 4, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          case 'move_left':
+            ctx.translate(-70, 0);
+            ctx.fillStyle = '#f97316';
+            break;
+          case 'move_right':
+            ctx.translate(70, 0);
+            ctx.fillStyle = '#f59e0b';
+            break;
+          case 'punch':
+            ctx.fillStyle = '#ef4444';
+            // Fist thrust
+            ctx.fillRect(20, -25, 28, 12);
+            // Comic starburst
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(50, -20, 14, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          case 'slap':
+            ctx.fillStyle = '#a855f7';
+            // Roundhouse arc
+            ctx.beginPath();
+            ctx.arc(10, -30, 32, -0.5, 1.5);
+            ctx.strokeStyle = '#e9d5ff';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            break;
+          default:
+            // Running
+            ctx.fillStyle = '#3b82f6';
+            break;
+        }
+
+        // Character Silhouette / Vector Body
+        // Head
+        ctx.beginPath();
+        ctx.arc(0, -50, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(5, -52, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Torso
+        ctx.fillStyle = ctx.fillStyle || '#3b82f6';
+        ctx.fillRect(-10, -36, 20, 36);
+
+        // Limbs
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+
+        // Legs
+        if (state === 'slide_down') {
+          ctx.beginPath();
+          ctx.moveTo(-5, 0);
+          ctx.lineTo(25, 10);
+          ctx.stroke();
+        } else {
+          // Left Leg
+          ctx.beginPath();
+          ctx.moveTo(-5, 0);
+          ctx.lineTo(-5 - legOsc, 26);
+          ctx.stroke();
+          // Right Leg
+          ctx.beginPath();
+          ctx.moveTo(5, 0);
+          ctx.lineTo(5 + legOsc, 26);
+          ctx.stroke();
+        }
+
+        // Arms
+        ctx.beginPath();
+        ctx.moveTo(-8, -30);
+        ctx.lineTo(-8 + armOsc, -12);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function runPlayLoop() {
+        if (!isPlayModeActive) return;
+
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        playCtx.clearRect(0, 0, w, h);
+
+        const curTime = ytPlayer ? ytPlayer.getCurrentTime() : playheadTime;
+        const now = performance.now();
+
+        // Check if Virtual Run or Game
+        if (currentProject.script?.type === 'virtual_run') {
+          // Virtual Run logic
+          runState.elapsedSec += 0.016;
+          runState.distanceTraveledKm += (runState.speedKmh / 3600) * 0.016;
+          runState.calories = Math.floor(runState.distanceTraveledKm * 65);
+
+          // Update HUD
+          document.getElementById('run-hud-speed').textContent = runState.speedKmh.toFixed(1);
+          const paceMin = runState.speedKmh > 0 ? (60 / runState.speedKmh) : 0;
+          const pM = Math.floor(paceMin);
+          const pS = Math.floor((paceMin % 1) * 60);
+          document.getElementById('run-hud-pace').textContent = `${pM}:${String(pS).padStart(2, '0')}`;
+          document.getElementById('run-hud-distance').textContent = runState.distanceTraveledKm.toFixed(2);
+          document.getElementById('run-hud-calories').textContent = runState.calories;
+
+          // Drive YouTube playback rate
+          if (isPlayerReady && ytPlayer) {
+            const desiredRate = Math.max(0.25, Math.min(2.0, runState.speedKmh / 10));
+            // Snap to available rates
+            const avail = ytPlayer.getAvailablePlaybackRates() || [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2.0];
+            let closest = avail[0];
+            let diff = Math.abs(desiredRate - closest);
+            for (const r of avail) {
+              const d = Math.abs(desiredRate - r);
+              if (d < diff) {
+                closest = r;
+                diff = d;
+              }
+            }
+            ytPlayer.setPlaybackRate(closest);
+            document.getElementById('run-hud-rate').textContent = closest + 'x';
+          }
+        } else {
+          // Game Mode logic
+          const events = currentProject.script?.timeline || [];
+          const strikeX = w * 0.35;
+          const strikeY = h * 0.75;
+          const approachSpeed = 340; // pixels per second
+
+          // 1. Draw Strike Zone & Runway
+          playCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+          playCtx.lineWidth = 2;
+          playCtx.beginPath();
+          playCtx.moveTo(strikeX - 80, strikeY + 30);
+          playCtx.lineTo(w, strikeY + 30);
+          playCtx.stroke();
+
+          // Strike Target Circle
+          playCtx.strokeStyle = 'rgba(236, 72, 153, 0.8)';
+          playCtx.lineWidth = 3;
+          playCtx.beginPath();
+          playCtx.arc(strikeX, strikeY, 28, 0, Math.PI * 2);
+          playCtx.stroke();
+
+          // 2. Render Upcoming Event Cues
+          for (const evt of events) {
+            const timeDiff = evt.time - curTime;
+            // Draw if approaching within next 2.5 seconds
+            if (timeDiff > -0.4 && timeDiff < 2.5) {
+              const cueX = strikeX + (timeDiff * approachSpeed);
+              const color = ACTION_COLORS[evt.action] || '#ec4899';
+
+              // Approaching ring
+              const ringRadius = Math.max(28, 28 + (timeDiff * 25));
+              playCtx.strokeStyle = color;
+              playCtx.lineWidth = 2;
+              playCtx.beginPath();
+              playCtx.arc(cueX, strikeY, ringRadius, 0, Math.PI * 2);
+              playCtx.stroke();
+
+              // Cue Core Icon
+              playCtx.fillStyle = color;
+              playCtx.beginPath();
+              playCtx.arc(cueX, strikeY, 22, 0, Math.PI * 2);
+              playCtx.fill();
+
+              // Action label
+              playCtx.fillStyle = '#fff';
+              playCtx.font = 'bold 11px Inter';
+              playCtx.textAlign = 'center';
+              playCtx.fillText(evt.action.toUpperCase(), cueX, strikeY + 40);
+              playCtx.textAlign = 'start';
+            }
+
+            // Miss evaluation if event passed window without input
+            if (timeDiff < -0.3 && !gameState.evaluatedEvents.has(evt.id)) {
+              gameState.evaluatedEvents.add(evt.id);
+              triggerMiss();
+            }
+          }
+
+          // 3. Draw Player Character
+          gameState.charStateTime += 0.016;
+          drawAnimatedCharacter(playCtx, strikeX, strikeY, gameState.characterState, gameState.charStateTime);
+
+          // Reset temporary action back to running after animation finishes
+          if (gameState.characterState !== 'running' && gameState.charStateTime > 0.45) {
+            gameState.characterState = 'running';
+          }
+
+          // 4. Draw HUD (Score, Combo, Multiplier, Lives)
+          playCtx.fillStyle = '#fff';
+          playCtx.font = 'bold 24px JetBrains Mono';
+          playCtx.fillText(`SCORE: ${gameState.score}`, 40, 80);
+
+          if (gameState.combo > 1) {
+            playCtx.fillStyle = '#f59e0b';
+            playCtx.font = 'bold 18px Inter';
+            playCtx.fillText(`COMBO x${gameState.multiplier} (${gameState.combo})`, 40, 110);
+          }
+
+          // Lives Hearts
+          let hearts = '';
+          for (let i = 0; i < gameState.lives; i++) hearts += '❤️ ';
+          playCtx.font = '20px sans-serif';
+          playCtx.fillText(hearts, 40, 140);
+
+          // Feedback Pop text ("PERFECT!", "GOOD!", "MISS!")
+          if (gameState.feedbackTimer > 0) {
+            gameState.feedbackTimer -= 0.016;
+            playCtx.save();
+            playCtx.font = 'bold 36px Inter';
+            playCtx.fillStyle = gameState.lastFeedbackColor;
+            playCtx.textAlign = 'center';
+            playCtx.shadowColor = 'rgba(0,0,0,0.8)';
+            playCtx.shadowBlur = 8;
+            playCtx.fillText(gameState.lastFeedbackText, strikeX, strikeY - 70);
+            playCtx.restore();
+          }
+
+          // Debug view
+          if (gameState.debugOverlay) {
+            playCtx.fillStyle = 'rgba(0,0,0,0.7)';
+            playCtx.fillRect(w - 280, 20, 260, 100);
+            playCtx.fillStyle = '#38bdf8';
+            playCtx.font = '12px JetBrains Mono';
+            playCtx.fillText(`Cur Time: ${curTime.toFixed(3)}s`, w - 260, 45);
+            playCtx.fillText(`Playhead: ${playheadTime.toFixed(3)}s`, w - 260, 65);
+            playCtx.fillText(`Events Eval: ${gameState.evaluatedEvents.size}`, w - 260, 85);
+            playCtx.fillText(`Offset: ${gameState.calibrationOffsetMs}ms`, w - 260, 105);
+          }
+        }
+
+        playAnimFrame = requestAnimationFrame(runPlayLoop);
+      }
+
+      // Input evaluator against game timing windows
+      function handleGameActionInput(action) {
+        if (!isPlayModeActive || currentProject.script?.type !== 'game') return;
+
+        gameState.characterState = action;
+        gameState.charStateTime = 0;
+
+        const curTime = ytPlayer ? ytPlayer.getCurrentTime() : playheadTime;
+        const events = currentProject.script?.timeline || [];
+        const windowPerfect = (currentProject.script?.rules?.timingWindowMs?.perfect || 120) / 1000;
+        const windowGood = (currentProject.script?.rules?.timingWindowMs?.good || 280) / 1000;
+
+        // Find nearest matching event
+        let closestEvt = null;
+        let minDiff = 999;
+
+        for (const evt of events) {
+          if (gameState.evaluatedEvents.has(evt.id)) continue;
+          const diff = Math.abs(evt.time - curTime);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestEvt = evt;
+          }
+        }
+
+        if (closestEvt && minDiff <= windowGood) {
+          if (closestEvt.action === action) {
+            gameState.evaluatedEvents.add(closestEvt.id);
+            if (minDiff <= windowPerfect) {
+              // PERFECT!
+              gameState.score += 100 * gameState.multiplier;
+              gameState.combo++;
+              gameState.multiplier = Math.min(4, 1 + Math.floor(gameState.combo / 5));
+              showFeedback("PERFECT !", '#10b981');
+              playTone(880, 0.1);
+            } else {
+              // GOOD!
+              gameState.score += 50 * gameState.multiplier;
+              gameState.combo++;
+              showFeedback("GOOD !", '#3b82f6');
+              playTone(660, 0.1);
+            }
+          } else {
+            // Wrong action
+            triggerMiss();
+          }
+        }
+      }
+
+      function triggerMiss() {
+        gameState.combo = 0;
+        gameState.multiplier = 1;
+        gameState.misses++;
+        gameState.lives = Math.max(0, gameState.lives - 1);
+        showFeedback("MISS !", '#ef4444');
+        playTone(220, 0.15);
+
+        if (gameState.lives <= 0) {
+          showToast("Game Over ! Vos vies sont épuisées.");
+        }
+      }
+
+      function showFeedback(text, color) {
+        gameState.lastFeedbackText = text;
+        gameState.lastFeedbackColor = color;
+        gameState.feedbackTimer = 0.6;
+      }
+
+      // Simple Web Audio Tone Synthesizer for feedback
+      let audioCtx = null;
+      function playTone(freq, dur) {
+        try {
+          if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + dur);
+        } catch (e) {}
+      }
+
+      // Webcam Motion Detection (for Virtual Run input)
+      let webcamStream = null;
+      let webcamDiffCanvas = document.getElementById('webcam-diff-canvas');
+      let webcamDiffCtx = webcamDiffCanvas.getContext('2d');
+      let lastWebcamFrameData = null;
+
+      function setupWebcamIfNeeded() {
+        const mode = document.getElementById('run-input-mode').value;
+        if (mode !== 'webcam-motion') return;
+
+        navigator.mediaDevices.getUserMedia({ video: { width: 160, height: 120 } })
+          .then(stream => {
+            webcamStream = stream;
+            const videoEl = document.getElementById('webcam-video');
+            videoEl.srcObject = stream;
+            document.getElementById('webcam-pip').classList.remove('hidden');
+          })
+          .catch(err => {
+            console.warn("Webcam not accessible:", err);
+            showToast("Webcam non accessible, passage en mode curseur.");
+          });
+      }
+
+      function stopWebcam() {
+        if (webcamStream) {
+          webcamStream.getTracks().forEach(t => t.stop());
+          webcamStream = null;
+        }
+        document.getElementById('webcam-pip').classList.add('hidden');
+      }
+
+      // ========================================================================
+      // 9. AI AGENT WITH GEMINI REST API & REAL FUNCTION CALLING
+      // ========================================================================
+      let geminiApiKey = localStorage.getItem('videoplay_gemini_key') || '';
+      let geminiModel = localStorage.getItem('videoplay_gemini_model') || 'gemini-2.5-flash';
+
+      // Tool declarations for Gemini
+      const AI_TOOLS_DECLARATIONS = [
+        {
+          name: "get_project_state",
+          description: "Returns the current project video information, trim boundaries, cuts, and events."
+        },
+        {
+          name: "set_trim",
+          description: "Sets the video in (start) and out (end) trim boundaries.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              start: { type: "NUMBER", description: "Trim start in seconds" },
+              end: { type: "NUMBER", description: "Trim end in seconds" }
+            },
+            required: ["start", "end"]
+          }
+        },
+        {
+          name: "add_cut",
+          description: "Removes a segment of the video (skips it non-destructively during playback).",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              start: { type: "NUMBER", description: "Cut start in seconds" },
+              end: { type: "NUMBER", description: "Cut end in seconds" }
+            },
+            required: ["start", "end"]
+          }
+        },
+        {
+          name: "set_audio_muted",
+          description: "Mutes or unmutes the YouTube video audio.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              muted: { type: "BOOLEAN", description: "True to mute, false to unmute" }
+            },
+            required: ["muted"]
+          }
+        },
+        {
+          name: "add_event",
+          description: "Adds an obstacle or interactive action event at a specific timestamp.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              time: { type: "NUMBER", description: "Time in seconds (original video time)" },
+              action: { type: "STRING", enum: ["jump_small", "jump_long", "move_left", "move_right", "slide_down", "punch", "slap"] },
+              hint: { type: "STRING", description: "Visual hint text for the player" }
+            },
+            required: ["time", "action"]
+          }
+        },
+        {
+          name: "generate_script_from_video",
+          description: "Generates a full interactive game or virtual run script for this video.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              mode: { type: "STRING", enum: ["game", "virtual_run"] },
+              difficulty: { type: "STRING", enum: ["easy", "normal", "hard"] }
+            },
+            required: ["mode"]
+          }
+        }
+      ];
+
+      async function sendPromptToGemini(userPrompt) {
+        if (!geminiApiKey) {
+          appendAiMessage("bot", "⚠️ Clé API Gemini manquante. Veuillez cliquer sur l'engrenage des Paramètres en haut à droite pour renseigner votre clé API Google Gemini.");
+          return;
+        }
+
+        appendAiMessage("user", userPrompt);
+        appendAiMessage("bot", "⏳ Analyse en cours avec Gemini...");
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;
+
+        const systemInstruction = `Tu es l'assistant de VideoPlay Studio, un studio de montage vidéo interactif pour YouTube.
+Tu as accès aux outils pour piloter le projet en direct :
+- Les temps sont TOUJOURS en secondes réelles de la vidéo originale.
+- Ne place jamais d'obstacles à l'intérieur des coupes (cuts) ou en dehors de la plage trimStart/trimEnd.
+- Actions possibles : jump_small, jump_long, move_left, move_right, slide_down, punch, slap.
+Réponds de manière concise et appelle les outils appropriés pour satisfaire la demande.`;
+
+        const requestBody = {
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: `${systemInstruction}\n\nDemande utilisateur: ${userPrompt}\n\nÉtat actuel du projet: ${JSON.stringify(currentProject)}` }]
+            }
+          ],
+          tools: [{ functionDeclarations: AI_TOOLS_DECLARATIONS }]
+        };
+
+        try {
+          const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody)
+          });
+
+          if (!resp.ok) {
+            const errJson = await resp.json();
+            throw new Error(errJson.error?.message || `HTTP ${resp.status}`);
+          }
+
+          const data = await resp.json();
+          const candidate = data.candidates?.[0];
+          const part = candidate?.content?.parts?.[0];
+
+          if (part?.functionCall) {
+            // Execute real tool call
+            const toolCall = part.functionCall;
+            handleAiToolExecution(toolCall.name, toolCall.args);
+          } else if (part?.text) {
+            updateLastAiMessage(part.text);
+          } else {
+            updateLastAiMessage("Action réalisée.");
+          }
+        } catch (err) {
+          console.error("Gemini Error:", err);
+          updateLastAiMessage(`❌ Erreur Gemini : ${err.message}`);
+        }
+      }
+
+      function handleAiToolExecution(toolName, args) {
+        pushUndoState();
+        let reply = "";
+
+        switch (toolName) {
+          case 'set_trim':
+            currentProject.trimStart = args.start;
+            currentProject.trimEnd = args.end;
+            reply = `✅ Limites de trim modifiées : de ${args.start}s à ${args.end}s.`;
+            break;
+          case 'add_cut':
+            currentProject.cuts = currentProject.cuts || [];
+            currentProject.cuts.push({ id: 'cut_' + Date.now(), start: args.start, end: args.end });
+            reply = `✅ Coupe créée : segment de ${args.start}s à ${args.end}s supprimé.`;
+            break;
+          case 'set_audio_muted':
+            currentProject.audio = { muted: !!args.muted };
+            reply = args.muted ? "✅ Audio de la vidéo coupé." : "✅ Audio activé.";
+            break;
+          case 'add_event':
+            currentProject.script = currentProject.script || { type: 'game', timeline: [] };
+            currentProject.script.timeline = currentProject.script.timeline || [];
+            currentProject.script.timeline.push({
+              id: 'evt_' + Date.now(),
+              time: args.time,
+              action: args.action,
+              duration: 0.6,
+              points: 100,
+              hint: args.hint || args.action
+            });
+            reply = `✅ Obstacle ${args.action} placé à ${args.time}s.`;
+            break;
+          case 'generate_script_from_video':
+            // Generate standard balanced obstacles
+            currentProject.script = currentProject.script || {};
+            currentProject.script.type = args.mode;
+            if (args.mode === 'game') {
+              const dur = currentProject.trimEnd - currentProject.trimStart;
+              const step = dur / 7;
+              currentProject.script.timeline = [];
+              const actions = ["jump_small", "slide_down", "move_left", "punch", "jump_long", "move_right", "slap"];
+              for (let i = 0; i < 6; i++) {
+                const t = Number((currentProject.trimStart + step * (i + 1)).toFixed(2));
+                currentProject.script.timeline.push({
+                  id: 'evt_' + (i + 1),
+                  time: t,
+                  action: actions[i % actions.length],
+                  duration: 0.6,
+                  points: 100,
+                  hint: actions[i % actions.length]
+                });
+              }
+            }
+            reply = `✅ Scénario interactif généré avec succès (${args.mode}).`;
+            break;
+          default:
+            reply = `Outil ${toolName} exécuté.`;
+        }
+
+        saveProjects();
+        syncUI();
+        updateLastAiMessage(reply);
+        showToast("Action IA effectuée !");
+      }
+
+      function appendAiMessage(role, text) {
+        const list = document.getElementById('ai-messages-list');
+        const div = document.createElement('div');
+        div.className = `ai-msg ${role === 'user' ? 'ai-msg-user' : 'ai-msg-bot'}`;
+        div.textContent = text;
+        list.appendChild(div);
+        list.scrollTop = list.scrollHeight;
+      }
+
+      function updateLastAiMessage(text) {
+        const list = document.getElementById('ai-messages-list');
+        const last = list.querySelector('.ai-msg-bot:last-child');
+        if (last) {
+          last.textContent = text;
+        } else {
+          appendAiMessage('bot', text);
+        }
+      }
+
+      // ========================================================================
+      // 10. UI SYNCHRONIZATION & MODAL BINDINGS
+      // ========================================================================
+      function syncUI() {
+        if (!currentProject) return;
+
+        // Render project library list
+        renderProjectList();
+
+        // Sync Trim inputs
+        document.getElementById('trim-in-input').value = currentProject.trimStart || 0;
+        document.getElementById('trim-out-input').value = currentProject.trimEnd || currentProject.duration || 60;
+
+        // Sync Mute button state
+        const isMuted = currentProject.audio?.muted;
+        const muteIcon = document.getElementById('icon-mute-state');
+        const muteLabel = document.getElementById('label-mute-state');
+        if (isMuted) {
+          muteIcon.innerHTML = `<line x1="1" y1="1" x2="23" y2="23"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>`;
+          muteLabel.textContent = "Muet";
+        } else {
+          muteIcon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
+          muteLabel.textContent = "Audio";
+        }
+
+        // Script Mode Badge & Switcher
+        const isRun = currentProject.script?.type === 'virtual_run';
+        const badge = document.getElementById('script-mode-badge');
+        const gameView = document.getElementById('game-controls-container');
+        const runView = document.getElementById('run-controls-container');
+
+        if (isRun) {
+          badge.textContent = "VIRTUAL RUN";
+          badge.className = "badge badge-run";
+          gameView.classList.add('hidden');
+          runView.classList.remove('hidden');
+        } else {
+          badge.textContent = "JEU D'ACTION";
+          badge.className = "badge badge-game";
+          gameView.classList.remove('hidden');
+          runView.classList.add('hidden');
+        }
+
+        // Render Events Table
+        renderEventsTable();
+
+        // Render Cuts List
+        renderCutsList();
+
+        // Render EDL segments
+        renderEdlSegments();
+
+        // Render JSON Output
+        renderJsonOutput();
+
+        // Redraw Timeline
+        resizeCanvas();
+      }
+
+      function renderProjectList() {
+        const listEl = document.getElementById('video-list');
+        listEl.innerHTML = '';
+        const query = document.getElementById('library-search').value.toLowerCase();
+
+        projects
+          .filter(p => p.name.toLowerCase().includes(query) || (p.title && p.title.toLowerCase().includes(query)))
+          .forEach(p => {
+            const card = document.createElement('div');
+            card.className = `video-card ${p.id === currentProject?.id ? 'active' : ''}`;
+            const thumbUrl = `https://i.ytimg.com/vi/${p.youtubeId}/hqdefault.jpg`;
+            const badgeType = p.script?.type === 'game' ? 'badge-game' : (p.script?.type === 'virtual_run' ? 'badge-run' : 'badge-raw');
+            const badgeLabel = p.script?.type === 'game' ? 'GAME' : (p.script?.type === 'virtual_run' ? 'RUN' : 'RAW');
+
+            card.innerHTML = `
+              <div class="video-thumb" style="background-image:url('${thumbUrl}')">
+                <span class="video-thumb-duration">${formatTime(p.duration || 60)}</span>
+              </div>
+              <div class="video-info">
+                <div class="video-title" title="${p.name}">${p.name}</div>
+                <div class="video-meta">
+                  <span class="badge ${badgeType}">${badgeLabel}</span>
+                  <div class="flex gap-1">
+                    <button class="btn btn-icon btn-sm btn-delete-proj" title="Supprimer" style="padding:1px 3px;">✕</button>
+                  </div>
+                </div>
+              </div>
+            `;
+
+            card.addEventListener('click', (e) => {
+              if (e.target.classList.contains('btn-delete-proj')) {
+                e.stopPropagation();
+                if (projects.length <= 1) {
+                  showToast("Impossible de supprimer la dernière vidéo.");
+                  return;
+                }
+                projects = projects.filter(item => item.id !== p.id);
+                if (currentProject.id === p.id) {
+                  currentProject = projects[0];
+                }
+                saveProjects();
+                initPlayer();
+                syncUI();
+                return;
+              }
+              if (currentProject.id !== p.id) {
+                currentProject = p;
+                saveProjects();
+                initPlayer();
+                syncUI();
+              }
+            });
+
+            listEl.appendChild(card);
+          });
+      }
+
+      function renderEventsTable() {
+        const tbody = document.getElementById('events-table-body');
+        tbody.innerHTML = '';
+        const events = currentProject.script?.timeline || [];
+
+        if (events.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-dim); padding:1rem;">${I18N[currentLang].noEvents}</td></tr>`;
+          return;
+        }
+
+        events.forEach(evt => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="font-family:'JetBrains Mono';">${evt.time.toFixed(2)}s</td>
+            <td>
+              <span class="badge" style="background:${ACTION_COLORS[evt.action]}22; color:${ACTION_COLORS[evt.action]}; border:1px solid ${ACTION_COLORS[evt.action]}44;">
+                ${evt.action}
+              </span>
+            </td>
+            <td style="max-width:90px; overflow:hidden; text-overflow:ellipsis;">${evt.hint || ''}</td>
+            <td style="text-align:right;">
+              <button class="btn btn-sm btn-icon btn-del-evt" data-id="${evt.id}" style="padding:2px 4px; color:#f87171;">✕</button>
+            </td>
+          `;
+
+          tr.querySelector('.btn-del-evt').addEventListener('click', () => {
+            pushUndoState();
+            currentProject.script.timeline = currentProject.script.timeline.filter(e => e.id !== evt.id);
+            saveProjects();
+            syncUI();
+          });
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      function renderCutsList() {
+        const container = document.getElementById('cuts-list');
+        container.innerHTML = '';
+        const cuts = currentProject.cuts || [];
+
+        if (cuts.length === 0) {
+          container.innerHTML = `<span style="font-size:0.75rem; color:var(--text-dim);">Aucune coupe active.</span>`;
+          return;
+        }
+
+        cuts.forEach(cut => {
+          const div = document.createElement('div');
+          div.className = "flex items-center justify-between p-1";
+          div.style.background = "#090e1a";
+          div.style.borderRadius = "4px";
+          div.style.fontSize = "0.75rem";
+          div.innerHTML = `
+            <span class="font-mono" style="color:#fca5a5;">Coupe: ${formatTime(cut.start)} ➔ ${formatTime(cut.end)}</span>
+            <button class="btn btn-sm btn-danger btn-del-cut" style="padding:2px 5px;">✕</button>
+          `;
+          div.querySelector('.btn-del-cut').addEventListener('click', () => deleteCut(cut.id));
+          container.appendChild(div);
+        });
+      }
+
+      function renderEdlSegments() {
+        const container = document.getElementById('edl-segments-list');
+        const kept = getKeptSegments(currentProject);
+        container.innerHTML = '';
+
+        kept.forEach((seg, idx) => {
+          const line = document.createElement('div');
+          line.textContent = `#${idx + 1}: ${formatTime(seg.start)} ➔ ${formatTime(seg.end)} (${seg.duration.toFixed(1)}s)`;
+          container.appendChild(line);
+        });
+      }
+
+      function renderJsonOutput() {
+        const fullJson = {
+          schemaVersion: "1.0",
+          type: currentProject.script?.type || "game",
+          video: {
+            source: "youtube",
+            videoId: currentProject.youtubeId,
+            url: `https://www.youtube.com/watch?v=${currentProject.youtubeId}`,
+            title: currentProject.title || currentProject.name,
+            durationSeconds: currentProject.duration,
+            effectiveDurationSeconds: Number(getEffectiveDuration(currentProject).toFixed(2)),
+            trimStart: currentProject.trimStart,
+            trimEnd: currentProject.trimEnd,
+            cuts: currentProject.cuts || [],
+            keptSegments: getKeptSegments(currentProject),
+            audioMuted: !!currentProject.audio?.muted
+          },
+          meta: {
+            createdAt: new Date().toISOString(),
+            author: "VideoPlay Studio User",
+            difficulty: "normal"
+          },
+          game: currentProject.script?.type === 'game' ? currentProject.script : undefined,
+          virtualRun: currentProject.script?.type === 'virtual_run' ? currentProject.script?.virtualRun : undefined
+        };
+
+        const jsonStr = JSON.stringify(fullJson, null, 2);
+        document.getElementById('json-preview-box').textContent = jsonStr;
+      }
+
+      function showToast(message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span>${message}</span>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 2600);
+      }
+
+      // ========================================================================
+      // 11. EVENT LISTENERS & SHORTCUTS
+      // ========================================================================
+      function setupEventListeners() {
+        // Play / Pause
+        document.getElementById('btn-play-pause').addEventListener('click', () => {
+          if (!isPlayerReady || !ytPlayer) return;
+          if (isPlaying) ytPlayer.pauseVideo();
+          else ytPlayer.playVideo();
+        });
+
+        // Seek Start
+        document.getElementById('btn-seek-start').addEventListener('click', () => {
+          seekToTime(currentProject.trimStart || 0);
+        });
+
+        // Seek Left 1s
+        document.getElementById('btn-seek-left').addEventListener('click', () => {
+          seekToTime(playheadTime - 1);
+        });
+
+        // Seek Right 1s
+        document.getElementById('btn-seek-right').addEventListener('click', () => {
+          seekToTime(playheadTime + 1);
+        });
+
+        // Set In / Set Out
+        document.getElementById('btn-set-in').addEventListener('click', () => {
+          pushUndoState();
+          currentProject.trimStart = Number(playheadTime.toFixed(1));
+          saveProjects();
+          syncUI();
+          showToast(`Point In défini à ${formatTime(currentProject.trimStart)}`);
+        });
+
+        document.getElementById('btn-set-out').addEventListener('click', () => {
+          pushUndoState();
+          currentProject.trimEnd = Number(playheadTime.toFixed(1));
+          saveProjects();
+          syncUI();
+          showToast(`Point Out défini à ${formatTime(currentProject.trimEnd)}`);
+        });
+
+        // Split
+        document.getElementById('btn-split').addEventListener('click', splitAtPlayhead);
+
+        // Mute
+        document.getElementById('btn-toggle-mute').addEventListener('click', toggleMute);
+
+        // Preview Edited
+        document.getElementById('btn-preview-edited').addEventListener('click', () => {
+          seekToTime(currentProject.trimStart || 0);
+          if (isPlayerReady && ytPlayer) ytPlayer.playVideo();
+        });
+
+        // Reset
+        document.getElementById('btn-reset-edits').addEventListener('click', resetEdits);
+
+        // Undo / Redo
+        document.getElementById('btn-undo').addEventListener('click', undo);
+        document.getElementById('btn-redo').addEventListener('click', redo);
+
+        // Zoom Buttons
+        document.getElementById('btn-zoom-in').addEventListener('click', () => setZoom(zoomLevel * 1.3));
+        document.getElementById('btn-zoom-out').addEventListener('click', () => setZoom(zoomLevel / 1.3));
+        document.getElementById('btn-zoom-fit').addEventListener('click', () => {
+          if (!currentProject) return;
+          const dur = currentProject.duration || 60;
+          zoomLevel = (container.clientWidth - 40) / dur;
+          resizeCanvas();
+        });
+
+        // Snapping toggle
+        document.getElementById('btn-toggle-snap').addEventListener('click', () => {
+          snappingEnabled = !snappingEnabled;
+          document.getElementById('icon-snap').setAttribute('stroke', snappingEnabled ? '#10b981' : '#64748b');
+          showToast(snappingEnabled ? "Magnétisme activé" : "Magnétisme désactivé");
+        });
+
+        // Inspector Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const target = btn.getAttribute('data-tab');
+            document.getElementById('tab-pane-script').classList.toggle('hidden', target !== 'script');
+            document.getElementById('tab-pane-edl').classList.toggle('hidden', target !== 'edl');
+            document.getElementById('tab-pane-json').classList.toggle('hidden', target !== 'json');
+          });
+        });
+
+        // Mode switch buttons
+        document.getElementById('btn-mode-game').addEventListener('click', () => setScriptMode('game'));
+        document.getElementById('btn-mode-run').addEventListener('click', () => setScriptMode('virtual_run'));
+
+        // Add event now
+        document.getElementById('btn-add-event-now').addEventListener('click', () => addEventAtPlayhead("jump_small"));
+
+        // Play mode launch
+        document.getElementById('btn-play-mode').addEventListener('click', openPlayMode);
+        document.getElementById('btn-exit-play-mode').addEventListener('click', exitPlayMode);
+        document.getElementById('btn-toggle-debug').addEventListener('click', () => {
+          gameState.debugOverlay = !gameState.debugOverlay;
+        });
+
+        // Fullscreen Play Game Controls & Virtual Run Controls
+        document.getElementById('btn-run-speed-up').addEventListener('click', () => {
+          runState.speedKmh = Math.min(22, runState.speedKmh + 0.5);
+        });
+        document.getElementById('btn-run-speed-down').addEventListener('click', () => {
+          runState.speedKmh = Math.max(0, runState.speedKmh - 0.5);
+        });
+        document.getElementById('run-speed-slider').addEventListener('input', (e) => {
+          runState.speedKmh = parseFloat(e.target.value);
+        });
+
+        // AI Chat Floating toggle
+        document.getElementById('btn-toggle-ai').addEventListener('click', () => {
+          document.getElementById('ai-chat-panel').classList.toggle('hidden');
+        });
+        document.getElementById('btn-close-ai').addEventListener('click', () => {
+          document.getElementById('ai-chat-panel').classList.add('hidden');
+        });
+
+        // AI Chat Form submit
+        document.getElementById('ai-chat-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const input = document.getElementById('ai-user-input');
+          const val = input.value.trim();
+          if (!val) return;
+          input.value = '';
+          sendPromptToGemini(val);
+        });
+
+        // AI Chips
+        document.querySelectorAll('.ai-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const prompt = chip.getAttribute('data-prompt');
+            sendPromptToGemini(prompt);
+          });
+        });
+
+        // Copy & Download JSON
+        document.getElementById('btn-copy-json').addEventListener('click', () => {
+          const txt = document.getElementById('json-preview-box').textContent;
+          navigator.clipboard.writeText(txt);
+          showToast(I18N[currentLang].copySuccess);
+        });
+
+        document.getElementById('btn-download-json').addEventListener('click', () => {
+          const txt = document.getElementById('json-preview-box').textContent;
+          const blob = new Blob([txt], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${(currentProject.name || 'videoplay-script').replace(/\s+/g, '_')}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          showToast("Fichier JSON téléchargé !");
+        });
+
+        // Language toggle
+        document.getElementById('btn-lang-toggle').addEventListener('click', () => {
+          const newLang = currentLang === 'fr' ? 'en' : 'fr';
+          setLanguage(newLang);
+        });
+
+        // Modals (Add, Settings, Help)
+        document.getElementById('btn-open-add-modal').addEventListener('click', () => {
+          document.getElementById('modal-add-video').classList.remove('hidden');
+        });
+        document.getElementById('btn-settings').addEventListener('click', () => {
+          document.getElementById('input-api-key').value = geminiApiKey;
+          document.getElementById('input-model-name').value = geminiModel;
+          document.getElementById('modal-settings').classList.remove('hidden');
+        });
+        document.getElementById('btn-help').addEventListener('click', () => {
+          document.getElementById('modal-help').classList.remove('hidden');
+        });
+
+        document.querySelectorAll('.btn-close-modal').forEach(b => {
+          b.addEventListener('click', () => {
+            document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.add('hidden'));
+          });
+        });
+
+        // Save Settings
+        document.getElementById('btn-save-settings').addEventListener('click', () => {
+          geminiApiKey = document.getElementById('input-api-key').value.trim();
+          geminiModel = document.getElementById('input-model-name').value.trim() || 'gemini-2.5-flash';
+          localStorage.setItem('videoplay_gemini_key', geminiApiKey);
+          localStorage.setItem('videoplay_gemini_model', geminiModel);
+          document.getElementById('modal-settings').classList.add('hidden');
+          showToast(I18N[currentLang].savedSuccess);
+        });
+
+        // Add Video Submit
+        document.getElementById('btn-submit-add-video').addEventListener('click', () => {
+          const text = document.getElementById('input-yt-urls').value.trim();
+          if (!text) return;
+
+          const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+          let addedCount = 0;
+
+          for (const line of lines) {
+            const ytid = parseYouTubeID(line);
+            if (ytid) {
+              const newProj = {
+                id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                name: 'Vidéo ' + ytid,
+                youtubeId: ytid,
+                title: 'Vidéo ' + ytid,
+                duration: 60.0,
+                trimStart: 0,
+                trimEnd: 60.0,
+                cuts: [],
+                audio: { muted: false },
+                script: {
+                  schemaVersion: "1.0",
+                  type: "game",
+                  timeline: []
+                }
+              };
+              projects.unshift(newProj);
+              addedCount++;
+            }
+          }
+
+          if (addedCount > 0) {
+            currentProject = projects[0];
+            saveProjects();
+            initPlayer();
+            syncUI();
+            document.getElementById('modal-add-video').classList.add('hidden');
+            document.getElementById('input-yt-urls').value = '';
+            showToast(`${addedCount} vidéo(s) ajoutée(s) !`);
+          } else {
+            showToast("Lien YouTube invalide.");
+          }
+        });
+
+        // Global Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+          // Ignore if user is typing in an input
+          if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+          if (isPlayModeActive) {
+            // In Play Mode: Game Inputs
+            if (e.key === 'ArrowUp' && e.shiftKey) { e.preventDefault(); handleGameActionInput('jump_long'); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); handleGameActionInput('jump_small'); }
+            else if (e.key === 'ArrowDown') { e.preventDefault(); handleGameActionInput('slide_down'); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); handleGameActionInput('move_left'); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); handleGameActionInput('move_right'); }
+            else if (e.code === 'KeyF') { e.preventDefault(); handleGameActionInput('punch'); }
+            else if (e.code === 'KeyD') { e.preventDefault(); handleGameActionInput('slap'); }
+            else if (e.key === 'Escape') { exitPlayMode(); }
+            return;
+          }
+
+          // In Editor Mode Shortcuts
+          if (e.code === 'Space') {
+            e.preventDefault();
+            document.getElementById('btn-play-pause').click();
+          } else if (e.code === 'KeyI') {
+            document.getElementById('btn-set-in').click();
+          } else if (e.code === 'KeyO') {
+            document.getElementById('btn-set-out').click();
+          } else if (e.code === 'KeyS') {
+            splitAtPlayhead();
+          } else if (e.code === 'KeyM') {
+            toggleMute();
+          } else if (e.key === 'ArrowLeft') {
+            seekToTime(playheadTime - (e.shiftKey ? 0.1 : 1.0));
+          } else if (e.key === 'ArrowRight') {
+            seekToTime(playheadTime + (e.shiftKey ? 0.1 : 1.0));
+          } else if (e.key === '+' || e.key === '=') {
+            setZoom(zoomLevel * 1.3);
+          } else if (e.key === '-') {
+            setZoom(zoomLevel / 1.3);
+          } else if (e.ctrlKey && e.code === 'KeyZ') {
+            e.preventDefault();
+            undo();
+          } else if (e.ctrlKey && e.code === 'KeyY') {
+            e.preventDefault();
+            redo();
+          } else if (['1', '2', '3', '4', '5', '6', '7'].includes(e.key)) {
+            // Quick Action drop while playing
+            const actionsMap = {
+              '1': 'jump_small',
+              '2': 'jump_long',
+              '3': 'move_left',
+              '4': 'move_right',
+              '5': 'slide_down',
+              '6': 'punch',
+              '7': 'slap'
+            };
+            addEventAtPlayhead(actionsMap[e.key]);
+          }
+        });
+
+        window.addEventListener('resize', () => {
+          resizeCanvas();
+        });
+      }
+
+      // ========================================================================
+      // 12. INITIALIZATION ON DOM READY
+      // ========================================================================
+      window.addEventListener('DOMContentLoaded', () => {
+        loadStoredProjects();
+        setupEventListeners();
+        setLanguage(localStorage.getItem('videoplay_lang') || 'fr');
+        syncUI();
+        loadYouTubeAPI();
+      });
+
+    })();
+  </script>
+</body>
+</html>
