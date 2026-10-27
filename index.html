@@ -373,6 +373,15 @@
                   <input type="number" id="meta-level" class="input-field" min="1" max="99" value="1" />
                 </div>
               </div>
+              <div>
+                <label class="lbl" for="meta-genre">Genre (une rangée par genre sur la TV)</label>
+                <input type="text" id="meta-genre" class="input-field" list="genre-suggestions" maxlength="40" placeholder="ex: Combat, Cardio, Nature..." />
+                <datalist id="genre-suggestions">
+                  <option value="Action"></option><option value="Combat"></option><option value="Cardio"></option>
+                  <option value="Nature"></option><option value="Montagne"></option><option value="Plage"></option>
+                  <option value="Ville"></option><option value="Enfants"></option>
+                </datalist>
+              </div>
             </div>
           </div>
 
@@ -441,6 +450,16 @@
                   <option value="WIN">WIN (Victoire)</option>
                 </select>
 
+                <div class="flex gap-2">
+                  <div class="flex-1">
+                    <label class="lbl" for="new-event-fail-seek">✗ Si raté, aller à</label>
+                    <input type="text" id="new-event-fail-seek" class="input-field font-mono" placeholder="ex: 3:03" style="font-size:.75rem; padding:.35rem .55rem;" />
+                  </div>
+                  <div class="flex-1">
+                    <label class="lbl" for="new-event-success-seek">✓ Si réussi, aller à</label>
+                    <input type="text" id="new-event-success-seek" class="input-field font-mono" placeholder="ex: 5:00" style="font-size:.75rem; padding:.35rem .55rem;" />
+                  </div>
+                </div>
                 <div class="flex gap-2">
                   <input type="text" id="new-event-hint" class="input-field flex-1" placeholder="Indice visuel (ex: Sautez !)" style="font-size:.75rem; padding:.35rem .55rem;" />
                   <button id="btn-add-event-now" class="btn btn-sm btn-primary" title="Ajouter cette action au curseur" style="padding:.35rem .75rem;">
@@ -876,10 +895,38 @@
 
       function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
 
+      // Résultat d'une action : { seekTo: secondes } = positionner la vidéo à ce temps (temps ORIGINAL)
+      function isValidSeek(o) { return !!o && Number.isFinite(o.seekTo) && o.seekTo >= 0; }
+      // Actif = case cochée ET temps valide. Anciens fichiers (sans "enabled") = actifs.
+      function isSeekActive(o) { return isValidSeek(o) && o.enabled !== false; }
+      // Toujours exporté sous la forme { enabled: boolean, seekTo: nombre|null }
+      function seekOutcome(o) {
+        return { enabled: isSeekActive(o), seekTo: isValidSeek(o) ? round2(o.seekTo) : null };
+      }
+      function normalizeSeek(o) {
+        if (!o || typeof o !== 'object') return { enabled: false, seekTo: null };
+        return { enabled: o.enabled !== false && isValidSeek(o), seekTo: isValidSeek(o) ? o.seekTo : null };
+      }
+      function parseTimeInput(str) {
+        str = String(str ?? '').trim().replace(',', '.');
+        if (!str) return null;
+        if (/^\d+(\.\d+)?$/.test(str)) return parseFloat(str);
+        const m = str.match(/^(?:(\d+):)?(\d+):(\d{1,2}(?:\.\d+)?)$/);
+        if (!m) return null;
+        return (m[1] ? parseInt(m[1], 10) * 3600 : 0) + parseInt(m[2], 10) * 60 + parseFloat(m[3]);
+      }
+      function formatSeek(sec) {
+        const total = round2(Math.max(0, sec));
+        const h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), sc = round2(total - h * 3600 - m * 60);
+        const scStr = Number.isInteger(sc) ? String(sc).padStart(2, '0') : sc.toFixed(2).padStart(5, '0');
+        return h ? `${h}:${String(m).padStart(2, '0')}:${scStr}` : `${m}:${scStr}`;
+      }
+
       function ensureMeta(p) {
         p.meta = p.meta || {};
         if (!p.meta.createdAt) p.meta.createdAt = new Date().toISOString();
         if (!p.meta.author) p.meta.author = 'FitTV Arena Studio';
+        if (typeof p.meta.genre !== 'string') p.meta.genre = '';
         if (!DIFFICULTY_LEVEL[p.meta.difficulty]) p.meta.difficulty = 'normal';
         if (!p.meta.level) p.meta.level = DIFFICULTY_LEVEL[p.meta.difficulty];
         return p.meta;
@@ -924,7 +971,7 @@
         const out = {
           schemaVersion: '1.0',
           type,
-          meta: { title, difficulty: meta.difficulty, level: Number(meta.level) || 1, author: meta.author, createdAt: meta.createdAt },
+          meta: { title, genre: (meta.genre || '').trim(), difficulty: meta.difficulty, level: Number(meta.level) || 1, author: meta.author, createdAt: meta.createdAt },
           video: {
             source: 'youtube',
             videoId: p.youtubeId,
@@ -951,10 +998,14 @@
               .map(e => {
                 const d = ACTION_DEFAULTS[e.action] || { duration: 1.2, points: 100 };
                 const dur = (e.duration === undefined || e.duration === 0.6) ? d.duration : e.duration; // 0.6 = ancienne valeur par défaut
-                return {
+                const o = {
                   id: e.id, time: round2(e.time), action: e.action, showOnScreen: e.showOnScreen !== false,
                   duration: round2(dur), points: e.points ?? d.points, hint: e.hint || ''
                 };
+                // Résultats optionnels : repositionner la vidéo après un échec ou une réussite
+                o.onFail = seekOutcome(e.onFail);
+                o.onSuccess = seekOutcome(e.onSuccess);
+                return o;
               })
           };
         } else {
@@ -1501,10 +1552,22 @@
         const d = ACTION_DEFAULTS[chosen] || { duration: 1.2, points: 100 };
         const time = round2(playheadTime);
 
-        currentProject.script.timeline.push({
+        const newEvt = {
           id: newId('evt'), time, action: chosen, showOnScreen: isShow,
           duration: d.duration, points: d.points, hint: hint !== undefined ? hint : (typed || chosen)
-        });
+        };
+        // Les résultats du panneau ne s'appliquent qu'au bouton « Ajouter » (pas aux touches 1-0)
+        if (action === undefined) {
+          const f = parseTimeInput($('new-event-fail-seek').value);
+          const sv = parseTimeInput($('new-event-success-seek').value);
+          if ($('new-event-fail-seek').value.trim() && f === null || $('new-event-success-seek').value.trim() && sv === null) {
+            showToast('Temps de résultat invalide (ex: 3:03 ou 183).'); return;
+          }
+          if (f !== null) newEvt.onFail = { enabled: true, seekTo: round2(f) };
+          if (sv !== null) newEvt.onSuccess = { enabled: true, seekTo: round2(sv) };
+          $('new-event-fail-seek').value = ''; $('new-event-success-seek').value = '';
+        }
+        currentProject.script.timeline.push(newEvt);
         currentProject.script.timeline.sort((a, b) => a.time - b.time);
         saveProjects(); syncUI();
         showToast(`${chosen} ajoutée à ${time}s`);
@@ -1518,6 +1581,14 @@
           if (evt.time < tStart || evt.time > tEnd) w.push(`${evt.action} à ${evt.time}s : hors de la plage In/Out (${tStart}s - ${tEnd}s).`);
           (project.cuts || []).forEach(c => {
             if (evt.time >= c.start && evt.time <= c.end) w.push(`${evt.action} à ${evt.time}s : dans une coupe (${c.start}s - ${c.end}s).`);
+          });
+          [['onFail', 'raté'], ['onSuccess', 'réussi']].forEach(([k, lbl]) => {
+            const o = evt[k];
+            if (!isSeekActive(o)) return;
+            if (o.seekTo < tStart || o.seekTo > tEnd) w.push(`${evt.action} à ${evt.time}s : retour « ${lbl} » (${formatSeek(o.seekTo)}) hors plage In/Out.`);
+            (project.cuts || []).forEach(c => {
+              if (o.seekTo >= c.start && o.seekTo < c.end) w.push(`${evt.action} à ${evt.time}s : retour « ${lbl} » (${formatSeek(o.seekTo)}) tombe dans une coupe.`);
+            });
           });
         });
         return w;
@@ -1539,6 +1610,7 @@
         set('inspector-video-author', m.author);
         set('meta-difficulty', m.difficulty);
         set('meta-level', m.level);
+        set('meta-genre', m.genre);
         if (p.script?.type === 'virtual_run') {
           const vr = ensureRun(p);
           set('run-route-name', vr.route.name ?? p.name);
@@ -1563,6 +1635,7 @@
           m.difficulty = e.target.value; m.level = DIFFICULTY_LEVEL[m.difficulty];
           $('meta-level').value = m.level; commit();
         });
+        on('meta-genre', 'input', e => { ensureMeta(currentProject).genre = e.target.value.slice(0, 40); commit(); });
         on('meta-level', 'input', e => { ensureMeta(currentProject).level = Math.max(1, parseInt(e.target.value, 10) || 1); commit(); });
         on('inspector-video-author', 'input', e => { ensureMeta(currentProject).author = e.target.value.trim(); commit(); });
 
@@ -1628,7 +1701,7 @@
 
         Object.assign(game, {
           score: 0, combo: 0, multiplier: 1, misses: 0, perfect: 0, good: 0, maxCombo: 0,
-          lives: ensureRules(currentProject).maxLives, charState: 'running', charTime: 0, over: null, feedbackTimer: 0
+          lives: ensureRules(currentProject).maxLives, charState: 'running', charTime: 0, over: null, feedbackTimer: 0, seekGuardUntil: 0
         });
         game.evaluated.clear();
 
@@ -1713,6 +1786,33 @@
         try { ytPlayer.pauseVideo(); } catch (e) {}
       }
 
+      // Temps de jeu (avec calibration). Juste après un saut, on estime le temps car seekTo est asynchrone.
+      function getGameTime() {
+        if (performance.now() < (game.seekGuardUntil || 0)) return game.seekBase + (performance.now() - game.seekStart) / 1000;
+        let tm = playheadTime;
+        try { tm = ytPlayer.getCurrentTime() + calibrationMs / 1000; } catch (e) {}
+        return tm;
+      }
+
+      // Repositionne la vidéo (résultat d'une action). Les actions après la cible redeviennent jouables.
+      function jumpVideoTo(target) {
+        const tStart = currentProject.trimStart || 0, tEnd = currentProject.trimEnd || currentProject.duration || 1e6;
+        let tm = Math.max(tStart, Math.min(tEnd - 0.5, target));
+        for (const c of (currentProject.cuts || [])) if (tm >= c.start && tm < c.end) { tm = c.end + 0.05; break; }
+        try { ytPlayer.seekTo(tm, true); if (!isPlaying) ytPlayer.playVideo(); } catch (e) {}
+        playheadTime = tm; reachedEnd = false;
+        game.seekBase = tm; game.seekStart = performance.now(); game.seekGuardUntil = performance.now() + 900;
+        (currentProject.script?.timeline || []).forEach(ev => { if (ev.time >= tm) game.evaluated.delete(ev.id); else game.evaluated.add(ev.id); });
+        showFeedback((game.feedbackText ? game.feedbackText + '  ' : '') + '↪ ' + formatSeek(tm), game.feedbackColor);
+        game.feedbackTimer = 1.4;
+      }
+      function applyOutcome(o) {
+        if (!isSeekActive(o) || game.over) return;
+        const rules = ensureRules(currentProject);
+        if (game.lives <= 0 || game.misses >= rules.maxMisses) return; // Game over prioritaire
+        jumpVideoTo(o.seekTo);
+      }
+
       function playLoop(ts) {
         if (!isPlayModeActive) return;
         const dt = Math.min(0.1, (ts - lastFrameTs) / 1000);
@@ -1720,8 +1820,7 @@
         const w = window.innerWidth, h = window.innerHeight;
         playCtx.clearRect(0, 0, w, h);
 
-        let curTime = playheadTime;
-        try { curTime = ytPlayer.getCurrentTime() + calibrationMs / 1000; } catch (e) {}
+        const curTime = getGameTime();
 
         if (currentProject.script?.type === 'virtual_run') runFrame(dt, w, h);
         else gameFrame(dt, w, h, curTime);
@@ -1765,7 +1864,7 @@
             // Un événement joueur non réalisé dans la fenêtre = raté. Les événements système ne pénalisent jamais.
             if (diff < -(rules.timingWindowMs.good / 1000) && !game.evaluated.has(evt.id)) {
               game.evaluated.add(evt.id);
-              if (!isSystem) triggerMiss();
+              if (!isSystem) triggerMiss(evt);
               else if (evt.action === 'WIN') endGame('win');
             }
           }
@@ -1805,8 +1904,7 @@
       function handleGameActionInput(action) {
         if (!isPlayModeActive || currentProject.script?.type === 'virtual_run' || game.over) return;
         game.charState = action; game.charTime = 0;
-        let curTime = playheadTime;
-        try { curTime = ytPlayer.getCurrentTime() + calibrationMs / 1000; } catch (e) {}
+        const curTime = getGameTime();
         const rules = ensureRules(currentProject);
         const perfectW = rules.timingWindowMs.perfect / 1000, goodW = rules.timingWindowMs.good / 1000;
         const pressedSystem = SYSTEM_ACTIONS.includes(action);
@@ -1820,7 +1918,7 @@
         }
         if (!best || bestDiff > goodW) return; // appui sans événement proche : ignoré
 
-        if (best.action !== action) { game.evaluated.add(best.id); triggerMiss(); return; }
+        if (best.action !== action) { game.evaluated.add(best.id); triggerMiss(best); return; }
         game.evaluated.add(best.id);
         const base = best.points ?? 100;
         if (bestDiff <= perfectW) {
@@ -1831,12 +1929,14 @@
         game.maxCombo = Math.max(game.maxCombo, game.combo);
         game.multiplier = Math.min(rules.scoring.maxMultiplier, 1 + Math.floor(game.combo / rules.scoring.comboMultiplierStep));
         if (best.action === 'WIN') endGame('win');
+        applyOutcome(best.onSuccess);
       }
 
-      function triggerMiss() {
+      function triggerMiss(evt) {
         game.combo = 0; game.multiplier = 1; game.misses++;
         game.lives = Math.max(0, game.lives - 1);
         showFeedback('RATÉ !', '#ef4444'); playTone(220, 0.15);
+        if (evt) applyOutcome(evt.onFail);
       }
       function showFeedback(text, color) { game.feedbackText = text; game.feedbackColor = color; game.feedbackTimer = 0.6; }
 
@@ -1965,7 +2065,9 @@
         { name: 'add_cut', description: 'Supprime un segment (sauté à la lecture).', parameters: { type: 'OBJECT', properties: { start: { type: 'NUMBER' }, end: { type: 'NUMBER' } }, required: ['start', 'end'] } },
         { name: 'set_audio_muted', description: "Coupe ou active le son.", parameters: { type: 'OBJECT', properties: { muted: { type: 'BOOLEAN' } }, required: ['muted'] } },
         { name: 'add_event', description: 'Ajoute une action de jeu à un instant donné (temps de la vidéo originale).', parameters: { type: 'OBJECT', properties: {
-          time: { type: 'NUMBER' }, action: { type: 'STRING', enum: ACTION_LIST }, showOnScreen: { type: 'BOOLEAN' }, hint: { type: 'STRING' } }, required: ['time', 'action'] } },
+          time: { type: 'NUMBER' }, action: { type: 'STRING', enum: ACTION_LIST }, showOnScreen: { type: 'BOOLEAN' }, hint: { type: 'STRING' },
+          failSeekTo: { type: 'NUMBER', description: 'Si le joueur rate : repositionner la vidéo à ce temps (secondes)' },
+          successSeekTo: { type: 'NUMBER', description: 'Si le joueur réussit : repositionner la vidéo à ce temps (secondes)' } }, required: ['time', 'action'] } },
         { name: 'generate_script_from_video', description: 'Génère un scénario complet (jeu ou virtual run) à partir de la vidéo.', parameters: { type: 'OBJECT', properties: {
           mode: { type: 'STRING', enum: ['game', 'virtual_run'] }, difficulty: { type: 'STRING', enum: ['easy', 'normal', 'hard'] } }, required: ['mode'] } }
       ];
@@ -2048,7 +2150,10 @@ Un scénario de jeu commence par STARTING COUNT puis GO, et finit par END ou WIN
             if (!ACTION_LIST.includes(args.action)) return '❌ Action inconnue.';
             p.script = p.script || { type: 'game' }; p.script.timeline = p.script.timeline || [];
             const d = ACTION_DEFAULTS[args.action];
-            p.script.timeline.push({ id: newId('evt'), time: round2(clampT(args.time)), action: args.action, showOnScreen: args.showOnScreen !== false, duration: d.duration, points: d.points, hint: String(args.hint || args.action).slice(0, 80) });
+            const ne = { id: newId('evt'), time: round2(clampT(args.time)), action: args.action, showOnScreen: args.showOnScreen !== false, duration: d.duration, points: d.points, hint: String(args.hint || args.action).slice(0, 80) };
+            if (Number.isFinite(args.failSeekTo)) ne.onFail = { enabled: true, seekTo: round2(clampT(args.failSeekTo)) };
+            if (Number.isFinite(args.successSeekTo)) ne.onSuccess = { enabled: true, seekTo: round2(clampT(args.successSeekTo)) };
+            p.script.timeline.push(ne);
             p.script.timeline.sort((a, b) => a.time - b.time);
             return `✅ ${args.action} ajoutée à ${args.time}s.`;
           }
@@ -2142,6 +2247,47 @@ Un scénario de jeu commence par STARTING COUNT puis GO, et finit par END ou WIN
         });
       }
 
+      function outcomeField(evt, key, label, color) {
+        const stored = () => (isValidSeek(evt[key]) ? formatSeek(evt[key].seekTo) : '');
+        const active = isSeekActive(evt[key]);
+
+        const check = el('input', { type: 'checkbox', 'aria-label': 'Activer : ' + label, style: `accent-color:${color}; width:14px; height:14px; cursor:pointer;`, checked: active });
+        const input = el('input', { type: 'text', class: 'input-field font-mono', placeholder: 'ex: 3:03', 'aria-label': label, style: `padding:.2rem .35rem; font-size:.72rem; width:72px; opacity:${active ? 1 : 0.45};` });
+        input.value = stored();
+
+        check.addEventListener('change', (e) => {
+          pushUndoState();
+          if (e.target.checked) {
+            const hadTime = isValidSeek(evt[key]);
+            evt[key] = { enabled: true, seekTo: hadTime ? evt[key].seekTo : round2(playheadTime) };
+            if (!hadTime) showToast('Position du curseur utilisée : modifiez le temps si besoin.');
+          } else {
+            evt[key] = { enabled: false, seekTo: isValidSeek(evt[key]) ? evt[key].seekTo : null };
+          }
+          saveProjects(); syncUI();
+        });
+
+        input.addEventListener('change', (e) => {
+          const raw = e.target.value.trim();
+          if (!raw) { pushUndoState(); evt[key] = { enabled: false, seekTo: null }; saveProjects(); syncUI(); return; }
+          const v = parseTimeInput(raw);
+          if (v === null || v > (currentProject.duration || 1e6)) { showToast('Temps invalide (ex: 3:03 ou 183).'); e.target.value = stored(); return; }
+          pushUndoState(); evt[key] = { enabled: true, seekTo: round2(v) }; saveProjects(); syncUI();
+        });
+
+        const pin = el('button', { class: 'btn btn-sm btn-icon', title: 'Utiliser la position actuelle du curseur', 'aria-label': 'Utiliser la position du curseur', style: 'padding:2px 5px;', text: '📍', onclick: () => {
+          pushUndoState(); evt[key] = { enabled: true, seekTo: round2(playheadTime) }; saveProjects(); syncUI();
+        } });
+        return el('div', { class: 'flex items-center gap-1', style: 'flex:1;' },
+          check, el('span', { style: `font-size:.68rem; font-weight:700; color:${color}; white-space:nowrap;`, text: label }), input, pin);
+      }
+      function buildOutcomeRow(evt) {
+        return el('tr', null, el('td', { colspan: '5', style: 'padding:.2rem .5rem .5rem; background:rgba(255,255,255,.02);' },
+          el('div', { class: 'flex gap-2' },
+            outcomeField(evt, 'onFail', '✗ Raté →', '#f87171'),
+            outcomeField(evt, 'onSuccess', '✓ Réussi →', '#34d399'))));
+      }
+
       function renderEventsTable() {
         const tbody = $('events-table-body');
         tbody.replaceChildren();
@@ -2184,6 +2330,7 @@ Un scénario de jeu commence par STARTING COUNT puis GO, et finit par END ou WIN
                 currentProject.script.timeline = currentProject.script.timeline.filter(x => x.id !== evt.id);
                 saveProjects(); syncUI();
               } }))));
+          tbody.appendChild(buildOutcomeRow(evt));
         });
       }
 
@@ -2222,14 +2369,15 @@ Un scénario de jeu commence par STARTING COUNT puis GO, et finit par END ou WIN
           trimStart: Number(v.trimStart) || 0, trimEnd: Number(v.trimEnd) || dur,
           cuts: (Array.isArray(v.cuts) ? v.cuts : []).filter(c => Number.isFinite(c.start) && Number.isFinite(c.end)).map(c => ({ id: newId('cut'), start: c.start, end: c.end })),
           audio: { muted: !!v.audioMuted },
-          meta: { difficulty: j.meta?.difficulty, level: j.meta?.level, author: j.meta?.author, createdAt: j.meta?.createdAt },
+          meta: { genre: typeof j.meta?.genre === 'string' ? j.meta.genre : '', difficulty: j.meta?.difficulty, level: j.meta?.level, author: j.meta?.author, createdAt: j.meta?.createdAt },
           script: { type, timeline: [] }
         };
         if (type === 'game') {
           p.script.rules = j.game?.rules;
           p.script.timeline = (Array.isArray(j.game?.timeline) ? j.game.timeline : [])
             .filter(e => ACTION_LIST.includes(e.action) && Number.isFinite(e.time))
-            .map(e => ({ id: String(e.id || newId('evt')), time: e.time, action: e.action, showOnScreen: e.showOnScreen !== false, duration: e.duration, points: e.points, hint: String(e.hint || '') }));
+            .map(e => ({ id: String(e.id || newId('evt')), time: e.time, action: e.action, showOnScreen: e.showOnScreen !== false, duration: e.duration, points: e.points, hint: String(e.hint || ''),
+              onFail: normalizeSeek(e.onFail), onSuccess: normalizeSeek(e.onSuccess) }));
         } else {
           p.script.virtualRun = { route: { name: j.virtualRun?.route?.name || title, totalDistanceKm: j.virtualRun?.route?.totalDistanceKm, elevationGainM: j.virtualRun?.route?.elevationGainM }, input: { mode: 'manual-slider' } };
         }
