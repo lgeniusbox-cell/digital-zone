@@ -427,6 +427,7 @@
                 <span data-i18n="timelineEvents">Événements & Actions de Jeu</span>
                 <span class="badge badge-game" style="font-size:.68rem;">10 Actions</span>
               </div>
+              <button id="btn-open-detect" class="btn btn-game w-full" title="Gemini regarde la vidéo et place les actions pour vous">🤖 Détecter les actions avec l'IA</button>
 
               <div style="background:rgba(15,23,42,.7); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:.65rem; display:flex; flex-direction:column; gap:.5rem;">
                 <div class="flex items-center justify-between">
@@ -599,7 +600,8 @@
         <div class="ai-msg ai-msg-bot">👋 Bonjour ! Je peux créer un scénario de jeu, placer des obstacles, ajuster vos coupes ou configurer un Virtual Run. Ajoutez votre clé Gemini dans les paramètres.</div>
       </div>
       <div class="ai-chips">
-        <button class="ai-chip" data-prompt="Génère un scénario de jeu complet avec les 10 actions, bien réparties sur la vidéo.">🎮 Créer jeu</button>
+        <button class="ai-chip" data-action="detect">🤖 Détecter les actions</button>
+        <button class="ai-chip" data-prompt="Génère un scénario de jeu complet avec les 10 actions, bien réparties sur la vidéo.">🎮 Scénario de démo</button>
         <button class="ai-chip" data-prompt="Place des événements JUMP, LEFT et RIGHT régulièrement espacés.">⚡ Obstacles</button>
         <button class="ai-chip" data-prompt="Configure ce projet en Virtual Run.">🏃 Virtual Run</button>
       </div>
@@ -721,6 +723,64 @@
         </div>
       </div>
       <div class="modal-footer"><button class="btn btn-primary btn-close-modal" data-i18n="understood">Compris !</button></div>
+    </div>
+  </div>
+
+  <!-- MODAL: AUTO-DETECTION DES ACTIONS -->
+  <div id="modal-ai-detect" class="modal-backdrop hidden">
+    <div class="modal-box" style="max-width:800px;">
+      <div class="modal-header">
+        <h3 style="font-weight:700; font-size:1rem;">🤖 Détection automatique des actions</h3>
+        <button class="btn btn-sm btn-icon btn-close-modal" aria-label="Fermer">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:.78rem; color:var(--text-muted); line-height:1.5;">Gemini regarde la vidéo YouTube (publique) et propose les moments où le joueur doit agir. Vous relisez la liste, puis vous l'ajoutez à la timeline. Les temps peuvent être décalés d'environ 1 s : vérifiez avec « Aperçu » ou le mode test, puis ajustez.</p>
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label class="lbl" for="detect-scope">Zone</label>
+            <select id="detect-scope" class="select-field">
+              <option value="test">Test : 30 s à partir du curseur</option>
+              <option value="range">Toute la plage In/Out</option>
+            </select>
+          </div>
+          <div class="flex-1">
+            <label class="lbl" for="detect-fps">Précision (images/s)</label>
+            <select id="detect-fps" class="select-field">
+              <option value="1">1 (économique)</option>
+              <option value="2" selected>2 (recommandé)</option>
+              <option value="4">4 (actions très rapides)</option>
+            </select>
+          </div>
+          <div class="flex-1">
+            <label class="lbl" for="detect-chunk">Segments de (s)</label>
+            <input type="number" id="detect-chunk" class="input-field" min="15" max="120" value="45" />
+          </div>
+        </div>
+        <div>
+          <label class="lbl" for="detect-rules">Règles : que signifie chaque obstacle dans vos vidéos ?</label>
+          <textarea id="detect-rules" class="textarea-field" rows="6"></textarea>
+          <button type="button" id="btn-detect-reset-rules" class="btn btn-sm" style="margin-top:6px;">Règles par défaut</button>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="flex items-center gap-2" style="font-size:.78rem; cursor:pointer;">
+            <input type="checkbox" id="detect-system" checked style="accent-color:var(--primary);" />
+            Ajouter STARTING COUNT, GO et WIN (zone complète uniquement)
+          </label>
+          <label class="flex items-center gap-2" style="font-size:.78rem; cursor:pointer;">
+            <input type="checkbox" id="detect-replace" style="accent-color:var(--primary);" />
+            Remplacer les événements existants de cette zone
+          </label>
+        </div>
+        <div id="detect-estimate" class="badge badge-raw" style="text-transform:none; white-space:normal; border-radius:6px;"></div>
+        <div id="detect-status" style="font-size:.8rem; min-height:1.2em; user-select:text;"></div>
+        <div id="detect-results" style="max-height:260px; overflow-y:auto;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-close-modal">Fermer</button>
+        <button id="btn-detect-stop" class="btn btn-danger" disabled>Arrêter</button>
+        <button id="btn-detect-start" class="btn btn-game">Analyser la vidéo</button>
+        <button id="btn-detect-add" class="btn btn-primary" disabled>Ajouter la sélection</button>
+      </div>
     </div>
   </div>
 
@@ -2170,10 +2230,225 @@ Un scénario de jeu commence par STARTING COUNT puis GO, et finit par END ou WIN
               const d = ACTION_DEFAULTS[act];
               return { id: newId('evt'), time: round2(tm), action: act, showOnScreen: true, duration: d.duration, points: d.points, hint: act };
             });
-            return '✅ Scénario de jeu généré (10 actions, répartition régulière). Ajustez les temps sur la timeline.';
+            return '✅ Scénario de démo généré (répartition régulière, sans regarder la vidéo). Pour une vraie détection, utilisez « 🤖 Détecter les actions avec l\'IA ».';
           }
           default: return `Outil ${name} non géré.`;
         }
+      }
+
+      // ========================================================================
+      // 9b. DÉTECTION AUTOMATIQUE DES ACTIONS (GEMINI REGARDE LA VIDÉO)
+      // ========================================================================
+      const PLAYER_ACTIONS = ['JUMP', 'RIGHT', 'LEFT', 'SLIDE DOWN', 'SLASH', 'PUNCH'];
+      const DEFAULT_DETECT_RULES = [
+        '- Obstacle au sol devant le personnage (trou, caisse, barrière basse) : JUMP',
+        '- Obstacle en hauteur ou passage bas à franchir en dessous : SLIDE DOWN',
+        '- Obstacle sur la voie du personnage avec passage libre à gauche : LEFT',
+        '- Obstacle sur la voie du personnage avec passage libre à droite : RIGHT',
+        '- Ennemi ou objet à frapper de face : PUNCH',
+        '- Cible ou obstacle à trancher : SLASH'
+      ].join('\n');
+      const detect = { running: false, abort: false, items: [], range: null };
+
+      function detectRangeFromUI() {
+        const tStart = currentProject.trimStart || 0, tEnd = currentProject.trimEnd || currentProject.duration || 60;
+        if ($('detect-scope').value === 'test') {
+          const s = Math.min(Math.max(tStart, playheadTime), Math.max(tStart, tEnd - 3));
+          return { start: round2(s), end: round2(Math.min(tEnd, s + 30)) };
+        }
+        return { start: tStart, end: tEnd };
+      }
+
+      function updateDetectEstimate() {
+        if (!currentProject) return;
+        const r = detectRangeFromUI();
+        const fps = parseFloat($('detect-fps').value) || 1;
+        const secs = Math.max(0, r.end - r.start);
+        const tokens = Math.round(secs * (258 * fps + 32));
+        $('detect-estimate').textContent = `Zone analysée : ${formatSeek(r.start)} → ${formatSeek(r.end)} (${Math.round(secs)} s). Entrée estimée : environ ${tokens.toLocaleString('fr-FR')} tokens.`;
+      }
+
+      function setDetectStatus(msg) { $('detect-status').textContent = msg; }
+
+      function buildChunks(start, end, len) {
+        const out = [];
+        for (let s = start; s < end - 0.5; s += len) {
+          const e = Math.min(end, s + len);
+          out.push({ s, e, reqEnd: e < end ? Math.min(end, e + 2) : e }); // 2 s de recouvrement pour ne pas couper un obstacle
+        }
+        return out;
+      }
+
+      async function detectChunk(chunk, fps, rules) {
+        const base = Math.floor(chunk.s), endOff = Math.ceil(chunk.reqEnd), clipLen = endOff - base;
+        const prompt = `You are analysing a clip of a runner / platformer style video that will become an interactive action game.
+The clip lasts ${clipLen} seconds (0 = first frame of THIS clip).
+List every moment where the player character must perform one of these actions: ${PLAYER_ACTIONS.join(', ')}.
+"time" = the exact moment the player must press the button, just BEFORE the obstacle or enemy reaches the character (not when it first appears on screen), in seconds relative to the start of THIS clip, with one decimal.
+Mapping rules from the game designer:
+${rules}
+Constraints: only clearly visible obstacles or targets, never invent any, at most one action per second unless the video clearly shows a combo. "hint" is a short French instruction (max 4 words). "confidence" is between 0 and 1. If nothing happens in this clip, return {"events": []}.`;
+
+        const body = {
+          contents: [{ role: 'user', parts: [
+            { fileData: { fileUri: `https://www.youtube.com/watch?v=${currentProject.youtubeId}` }, videoMetadata: { startOffset: `${base}s`, endOffset: `${endOff}s`, fps } },
+            { text: prompt }
+          ] }],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: 'application/json',
+            responseSchema: { type: 'OBJECT', properties: { events: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+              time: { type: 'NUMBER' }, action: { type: 'STRING', enum: PLAYER_ACTIONS }, hint: { type: 'STRING' }, confidence: { type: 'NUMBER' }
+            }, required: ['time', 'action'] } } }, required: ['events'] }
+          }
+        };
+        const data = await callGemini(body);
+        const txt = (data.candidates?.[0]?.content?.parts || []).map(x => x.text || '').join('');
+        let parsed;
+        try { parsed = JSON.parse(txt.replace(/```json|```/g, '').trim()); } catch (e) { throw new Error('réponse JSON illisible'); }
+        const arr = Array.isArray(parsed) ? parsed : (parsed.events || []);
+        return arr.map(e => {
+          const t = Number(e.time);
+          if (!Number.isFinite(t)) return null;
+          let abs = t + base;
+          if (t > clipLen + 1 && t >= base - 1 && t <= endOff + 1) abs = t; // le modèle a répondu en temps absolu
+          const c = Number(e.confidence);
+          return { time: abs, action: String(e.action), hint: String(e.hint || '').slice(0, 80), confidence: Number.isFinite(c) ? Math.max(0, Math.min(1, c)) : null };
+        }).filter(Boolean);
+      }
+
+      // Filtre (plage, trim, coupes), supprime les doublons, ajoute départ/arrivée
+      function finalizeDetected(raw, range, withSystem) {
+        const tStart = currentProject.trimStart || 0, tEnd = currentProject.trimEnd || currentProject.duration || 1e6;
+        const inCut = (tm) => (currentProject.cuts || []).some(c => tm >= c.start && tm <= c.end);
+        const lo = Math.max(range.start, tStart), hi = Math.min(range.end, tEnd);
+        const list = raw.filter(e => PLAYER_ACTIONS.includes(e.action) && Number.isFinite(e.time) && e.time >= lo && e.time <= hi && !inCut(e.time))
+          .sort((a, b) => a.time - b.time);
+        const out = [];
+        for (const e of list) {
+          const prev = out[out.length - 1];
+          if (prev) {
+            const gap = e.time - prev.time, same = prev.action === e.action;
+            if ((same && gap < 0.7) || (!same && gap < 0.35)) {
+              if ((e.confidence ?? 0.5) > (prev.confidence ?? 0.5)) out[out.length - 1] = e;
+              continue;
+            }
+          }
+          out.push(e);
+        }
+        const items = out.map(e => ({ time: round2(e.time), action: e.action, hint: e.hint || '', confidence: e.confidence, selected: true }));
+        if (withSystem) {
+          const have = (a) => (currentProject.script?.timeline || []).some(ev => ev.action === a);
+          [['STARTING COUNT', range.start + 0.5, 'Attention au départ !'], ['GO', range.start + 3.5, 'En piste !'], ['WIN', range.end - 2.5, 'Victoire !']]
+            .forEach(([a, tm, h]) => {
+              if (!have(a) && tm >= tStart && tm <= tEnd && !inCut(tm)) items.push({ time: round2(tm), action: a, hint: h, confidence: null, selected: true });
+            });
+          items.sort((x, y) => x.time - y.time);
+        }
+        return items;
+      }
+
+      function updateDetectAddLabel() {
+        const n = detect.items.filter(i => i.selected).length;
+        $('btn-detect-add').textContent = `Ajouter la sélection (${n})`;
+        $('btn-detect-add').disabled = detect.running || n === 0;
+      }
+
+      function renderDetectResults() {
+        const box = $('detect-results');
+        box.replaceChildren();
+        detect.items.forEach((it) => {
+          const color = ACTION_COLORS[it.action] || '#ec4899';
+          const chk = el('input', { type: 'checkbox', 'aria-label': 'Garder cette action', style: 'accent-color:#3b82f6;', checked: it.selected });
+          chk.addEventListener('change', (e) => { it.selected = e.target.checked; updateDetectAddLabel(); });
+          const time = el('input', { type: 'number', step: '0.1', min: '0', class: 'input-field font-mono', 'aria-label': 'Temps', style: 'width:84px; padding:.2rem .3rem; font-size:.72rem;' });
+          time.value = it.time;
+          time.addEventListener('change', (e) => { const v = parseFloat(e.target.value); if (!isNaN(v) && v >= 0) it.time = round2(v); else e.target.value = it.time; });
+          const sel = el('select', { class: 'select-field', 'aria-label': 'Action', style: `padding:.2rem .3rem; font-size:.72rem; font-weight:700; border:1px solid ${color}; color:${color}; min-width:118px; width:auto;` },
+            ...ACTION_LIST.map(a => el('option', { value: a, text: a, selected: a === it.action })));
+          sel.addEventListener('change', (e) => { it.action = e.target.value; renderDetectResults(); });
+          const hint = el('input', { type: 'text', class: 'input-field', 'aria-label': 'Indice', style: 'padding:.2rem .35rem; font-size:.72rem;' });
+          hint.value = it.hint || '';
+          hint.addEventListener('change', (e) => { it.hint = e.target.value.trim().slice(0, 80); });
+          const conf = el('span', { class: 'badge badge-raw', style: 'font-size:.62rem;', text: it.confidence == null ? 'auto' : Math.round(it.confidence * 100) + '%' });
+          box.appendChild(el('div', { class: 'flex items-center gap-2', style: 'padding:.25rem 0; border-bottom:1px solid rgba(255,255,255,.05);' }, chk, time, sel, hint, conf));
+        });
+        updateDetectAddLabel();
+      }
+
+      async function runDetection() {
+        if (detect.running) return;
+        if (!geminiApiKey) { setDetectStatus('⚠️ Ajoutez votre clé Gemini dans les paramètres (icône ⚙).'); return; }
+        const range = detectRangeFromUI();
+        if (range.end - range.start < 3) { setDetectStatus('⚠️ Zone trop courte : vérifiez les points In/Out et le curseur.'); return; }
+        const chunkLen = Math.max(15, Math.min(120, parseInt($('detect-chunk').value, 10) || 45));
+        const fps = parseFloat($('detect-fps').value) || 2;
+        const rules = $('detect-rules').value.trim() || DEFAULT_DETECT_RULES;
+        try { localStorage.setItem('videoplay_detect_rules', rules); } catch (e) {}
+
+        detect.running = true; detect.abort = false; detect.items = []; detect.range = range;
+        $('btn-detect-start').disabled = true; $('btn-detect-stop').disabled = false;
+        renderDetectResults();
+
+        const chunks = buildChunks(range.start, range.end, chunkLen);
+        const raw = [];
+        let failed = 0, fatal = false;
+        for (let i = 0; i < chunks.length && !detect.abort; i++) {
+          const c = chunks[i];
+          setDetectStatus(`⏳ Analyse du segment ${i + 1}/${chunks.length} (${formatSeek(c.s)} → ${formatSeek(c.e)})...`);
+          try { raw.push(...await detectChunk(c, fps, rules)); }
+          catch (err) {
+            failed++;
+            if (i === 0 && (err.status === 400 || err.status === 403 || /fetch|url|permission|private/i.test(err.message))) {
+              setDetectStatus('❌ Gemini ne peut pas lire cette vidéo : elle doit être publique (testez aussi « non répertoriée ») et sa clé API valide. Détail : ' + err.message);
+              fatal = true; break;
+            }
+            setDetectStatus(`⚠️ Segment ${i + 1} en erreur : ${err.message}`);
+          }
+        }
+        detect.running = false;
+        $('btn-detect-start').disabled = false; $('btn-detect-stop').disabled = true;
+        if (fatal) { updateDetectAddLabel(); return; }
+
+        detect.items = finalizeDetected(raw, range, $('detect-system').checked && $('detect-scope').value === 'range');
+        renderDetectResults();
+        const n = detect.items.length;
+        setDetectStatus(`${detect.abort ? '⏹ Arrêté. ' : '✅ '}${n} action(s) proposée(s)${failed ? `, ${failed} segment(s) en erreur` : ''}. Relisez la liste, décochez ou corrigez, puis ajoutez-la.`);
+      }
+
+      function addDetectedToProject() {
+        const chosen = detect.items.filter(i => i.selected && ACTION_LIST.includes(i.action) && Number.isFinite(i.time));
+        if (!chosen.length) { showToast('Aucune action sélectionnée.'); return; }
+        pushUndoState();
+        currentProject.script = currentProject.script || { type: 'game' };
+        currentProject.script.type = 'game';
+        let tl = currentProject.script.timeline || [];
+        if ($('detect-replace').checked && detect.range) tl = tl.filter(e => e.time < detect.range.start || e.time > detect.range.end);
+        chosen.forEach(i => {
+          const d = ACTION_DEFAULTS[i.action];
+          tl.push({ id: newId('evt'), time: round2(i.time), action: i.action, showOnScreen: true, duration: d.duration, points: d.points, hint: i.hint || i.action });
+        });
+        tl.sort((a, b) => a.time - b.time);
+        currentProject.script.timeline = tl;
+        saveProjects(); syncUI();
+        closeModals();
+        showToast(`${chosen.length} action(s) ajoutée(s). Vérifiez-les avec « Aperçu » ou le mode test.`);
+      }
+
+      function setupDetectUI() {
+        let rules = DEFAULT_DETECT_RULES;
+        try { rules = localStorage.getItem('videoplay_detect_rules') || rules; } catch (e) {}
+        $('detect-rules').value = rules;
+        $('btn-open-detect').addEventListener('click', () => {
+          detect.items = []; renderDetectResults(); setDetectStatus('');
+          updateDetectEstimate();
+          $('modal-ai-detect').classList.remove('hidden');
+        });
+        ['detect-scope', 'detect-fps'].forEach(id => $(id).addEventListener('change', updateDetectEstimate));
+        $('btn-detect-start').addEventListener('click', runDetection);
+        $('btn-detect-stop').addEventListener('click', () => { detect.abort = true; });
+        $('btn-detect-add').addEventListener('click', addDetectedToProject);
+        $('btn-detect-reset-rules').addEventListener('click', () => { $('detect-rules').value = DEFAULT_DETECT_RULES; });
       }
 
       // ========================================================================
@@ -2412,7 +2687,7 @@ Un scénario de jeu commence par STARTING COUNT puis GO, et finit par END ou WIN
         return null;
       }
 
-      function closeModals() { document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.add('hidden')); }
+      function closeModals() { detect.abort = true; document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.add('hidden')); }
 
       function setupEventListeners() {
         $('btn-play-pause').addEventListener('click', () => {
@@ -2492,7 +2767,9 @@ Un scénario de jeu commence par STARTING COUNT puis GO, et finit par END ou WIN
           const v = $('ai-user-input').value.trim(); if (!v) return;
           $('ai-user-input').value = ''; sendPromptToGemini(v);
         });
-        document.querySelectorAll('.ai-chip').forEach(c => c.addEventListener('click', () => sendPromptToGemini(c.getAttribute('data-prompt'))));
+        document.querySelectorAll('.ai-chip').forEach(c => c.addEventListener('click', () => {
+          if (c.dataset.action === 'detect') $('btn-open-detect').click(); else sendPromptToGemini(c.getAttribute('data-prompt'));
+        }));
 
         // JSON
         $('btn-copy-json').addEventListener('click', () => {
@@ -2589,7 +2866,7 @@ Un scénario de jeu commence par STARTING COUNT puis GO, et finit par END ou WIN
         window.addEventListener('keydown', (e) => {
           const tag = e.target.tagName;
           if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
-          if (!$('modal-add-video').classList.contains('hidden') || !$('modal-settings').classList.contains('hidden') || !$('modal-help').classList.contains('hidden')) {
+          if (!$('modal-add-video').classList.contains('hidden') || !$('modal-settings').classList.contains('hidden') || !$('modal-help').classList.contains('hidden') || !$('modal-ai-detect').classList.contains('hidden')) {
             if (e.key === 'Escape') closeModals();
             return;
           }
@@ -2652,6 +2929,7 @@ Un scénario de jeu commence par STARTING COUNT puis GO, et finit par END ou WIN
         loadStoredProjects();
         setupEventListeners();
         bindExportInputs();
+        setupDetectUI();
         let lang = 'fr';
         try { lang = localStorage.getItem('videoplay_lang') || 'fr'; } catch (e) {}
         setLanguage(lang);
