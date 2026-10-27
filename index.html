@@ -678,7 +678,8 @@
         </div>
         <div>
           <label class="lbl" for="input-model-name" data-i18n="modelName">Modèle Gemini</label>
-          <input type="text" id="input-model-name" class="input-field" value="gemini-2.5-flash" />
+          <input type="text" id="input-model-name" class="input-field" value="gemini-3.8-flash" list="model-suggestions" />
+          <datalist id="model-suggestions"><option value="gemini-3.8-flash"></option></datalist>
         </div>
         <div>
           <label class="lbl" for="input-calibration-ms" data-i18n="calibration">Calibration de latence (ms)</label>
@@ -2112,10 +2113,14 @@
       // ========================================================================
       // 9. AGENT IA GEMINI (FUNCTION CALLING)
       // ========================================================================
-      let geminiApiKey = '', geminiModel = 'gemini-2.5-flash';
+      let geminiApiKey = '', geminiModel = 'gemini-3.8-flash';
       try {
         geminiApiKey = localStorage.getItem('videoplay_gemini_key') || '';
-        geminiModel = localStorage.getItem('videoplay_gemini_model') || 'gemini-2.5-flash';
+        geminiModel = localStorage.getItem('videoplay_gemini_model') || 'gemini-3.8-flash';
+        if (/^gemini-(1\.|2\.)/.test(geminiModel)) { // modèles retirés : migration automatique
+          geminiModel = 'gemini-3.8-flash';
+          localStorage.setItem('videoplay_gemini_model', geminiModel);
+        }
         calibrationMs = parseInt(localStorage.getItem('videoplay_calibration') || '0', 10) || 0;
       } catch (e) {}
 
@@ -2155,7 +2160,8 @@ Un scénario de jeu commence par STARTING COUNT puis GO, et finit par END ou WIN
           if (resp.ok) return resp.json();
           if ((resp.status === 429 || resp.status >= 500) && attempt < 2) { await new Promise(r => setTimeout(r, delay)); delay *= 2; continue; }
           const err = await resp.json().catch(() => ({}));
-          const e = new Error(err.error?.message || `HTTP ${resp.status}`); e.status = resp.status; throw e;
+          const hint = /no longer available|not found|not supported/i.test(err.error?.message || '') ? " (changez le nom du modèle dans les paramètres ⚙, ex : gemini-3.8-flash)" : '';
+          const e = new Error((err.error?.message || `HTTP ${resp.status}`) + hint); e.status = resp.status; throw e;
         }
       }
 
@@ -2295,7 +2301,6 @@ Constraints: only clearly visible obstacles or targets, never invent any, at mos
             { text: prompt }
           ] }],
           generationConfig: {
-            temperature: 0.2,
             responseMimeType: 'application/json',
             responseSchema: { type: 'OBJECT', properties: { events: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
               time: { type: 'NUMBER' }, action: { type: 'STRING', enum: PLAYER_ACTIONS }, hint: { type: 'STRING' }, confidence: { type: 'NUMBER' }
@@ -2845,7 +2850,7 @@ Constraints: only clearly visible obstacles or targets, never invent any, at mos
         $('input-calibration-ms').addEventListener('input', (e) => { $('label-calibration-ms').textContent = e.target.value + ' ms'; });
         $('btn-save-settings').addEventListener('click', () => {
           geminiApiKey = $('input-api-key').value.trim();
-          geminiModel = $('input-model-name').value.trim() || 'gemini-2.5-flash';
+          geminiModel = $('input-model-name').value.trim() || 'gemini-3.8-flash';
           calibrationMs = parseInt($('input-calibration-ms').value, 10) || 0;
           try {
             localStorage.setItem('videoplay_gemini_key', geminiApiKey);
